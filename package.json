@@ -28,6 +28,7 @@
     "morgan": "^1.10.0",
     "nodemon": "^2.0.20",
     "react-geolocated": "^4.0.3",
+    "validator": "^13.9.0",
     "winston": "^3.8.2",
     "winston-mongodb": "^5.1.1"
   }
