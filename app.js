@@ -30,11 +30,13 @@ const static_path = path.join(__dirname, "/public")
 app.use(express.static(static_path))
 
 
-app.post('/sellerRegister', (req, res) => {
+app.post('/sellerRegister', async (req, res) => {
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
 
     const { nameOfOrganization, email, gst, pan, password, phone, address, firstName, lastName, tags, category, subCategory } = req.body
+
+    const existingUser = await UserRegister.findOne({ email: req.body.email });
 
     if (firstName === '' || lastName === '' || email === '' || password === '' || phone === '' || address === '' || tags === '') {
         res.send({ message: "Fields must not be empty!" })
@@ -43,8 +45,14 @@ app.post('/sellerRegister', (req, res) => {
     else if (!isEmail(email)) {
         res.send({ message: "Invalid Email" })
     }
+    else if (existingUser) {
+        res.send({ message: "Email already in use" })
+    }
     else if (!passwordRegex.test(password)) {
-        res.send({ message: "Weak Password" })
+        res.send({ message: "Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
+    }
+    else if (phone.length < 10) {
+        res.send({ message: "Phone number must contain 10 characters" })
     }
 
     else {
@@ -68,16 +76,16 @@ app.post('/sellerRegister', (req, res) => {
                 category: category,
                 subCategory: subCategory,
             })
-
             newUser.save()
             res.send("Register Successfully")
         })
     }
 })
 
-app.post('/buyerRegister', (req, res) => {
+app.post('/buyerRegister', async (req, res) => {
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
+    const existingUser = await UserRegister.findOne({ email: req.body.email });
 
     const { firstName, lastName, email, password, address, phone, tags, } = req.body
 
@@ -88,8 +96,15 @@ app.post('/buyerRegister', (req, res) => {
     else if (!isEmail(email)) {
         res.send({ message: "Invalid Email" })
     }
+    else if (existingUser) {
+        res.send({ message: "Email already in use" })
+    }
+
     else if (!passwordRegex.test(password)) {
-        res.send({ message: "Weak Password" })
+        res.send({ message: " Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
+    }
+    else if (phone.length < 10) {
+        res.send({ message: "Phone number must contain 10 characters" })
     }
 
     else {
@@ -111,27 +126,41 @@ app.post('/buyerRegister', (req, res) => {
             buyerRegister.save();
             res.send("Register Successfully")
 
-
         })
     }
 })
 
 app.post("/post", (req, res) => {
     const { title, category, subCategory, phone, budget, location, description, tags, email } = req.body
-    const postData = new Post({
-        title: title,
-        category: category,
-        subCategory: subCategory,
-        phone: phone,
-        budget: budget,
-        location: location,
-        description: description,
-        tags: tags,
-        email: email
-    })
-    postData.save()
-    res.send("Posted")
+
+    if (title === "" || category === "" || subCategory === "" || phone === "" || budget === "" || location === "" || description === "" || tags === "") {
+        res.send({ message: "Fields must not be empty!" })
+    }
+    else if (budget < 0) {
+        res.send({ message: "Budget should not be negative" })
+    }
+    else if (phone.length < 10) {
+        res.send({ message: "Phone number must contain 10 characters" })
+    }
+
+    else {
+
+        const postData = new Post({
+            title: title,
+            category: category,
+            subCategory: subCategory,
+            phone: phone,
+            budget: budget,
+            location: location,
+            description: description,
+            tags: tags,
+            email: email
+        })
+        postData.save()
+        res.send("Posted")
+    }
 })
+
 
 app.post("/login", async (req, res) => {
 
@@ -180,6 +209,42 @@ app.post("/getSellerPost", (req, res) => {
         }
     })
 })
+
+app.get('/tags', (req, res) => {
+    Post.distinct('tags')
+        .then(tags => {
+            res.json(tags);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send('Error retrieving tags');
+        });
+});
+
+app.get('/posts/:tags', (req, res) => {
+    const tags = req.params.tags;
+
+    Post.find({ tags: tags })
+        .then(posts => {
+            res.json(posts);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send('Error retrieving posts');
+        });
+});
+
+app.get('/tagPost', (req, res) => {
+    Post.find()
+        .then(posts => {
+            res.json(posts);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send('Error retrieving posts');
+        });
+});
+
 
 app.listen(port, () => {
     console.log('info', `Server is running on port ${port}`)

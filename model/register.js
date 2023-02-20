@@ -16,16 +16,11 @@ const registerSchema = new mongoose.Schema({
     nameOfOrganization: {
         type: String,
         unique: true,
-
     },
     email: {
         type: String,
         unique: true,
         required: true,
-        validate: {
-            validator: isEmail,
-            message: 'Email address is invalid',
-        }
     },
     gst: {
         type: String,
@@ -44,14 +39,8 @@ const registerSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-        validate: {
-            validator: function (password) {
-                return password.length >= 8 && password.match(/\d/) && password.match(/[a-z]/) && password.match(/[A-Z]/);
-            },
-            message: 'Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit',
-        },
     },
-
+  
     phone: {
         type: Number,
         required: true,
@@ -78,7 +67,6 @@ registerSchema.path('email').validate(async (email) => {
     const count = await UserRegister.countDocuments({ email });
     return !count;
 }, 'Email address already in use');
-
 
 
 
