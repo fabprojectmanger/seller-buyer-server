@@ -4,14 +4,21 @@ const path = require("path")
 const cors = require("cors");
 const cookieParser = require('cookie-parser')
 const { isEmail } = require('validator');
-
 const logger = require('./config/logger')
-
 const bcrypt = require("bcrypt");
+const axios = require('axios');
+const requestIp = require('request-ip');
+
+
+app.use(requestIp.mw());
+
 
 const UserRegister = require("../userlogs/model/register")
 
 const Post = require("../userlogs/model/postJob");
+const Location = require("../userlogs/model/location");
+const { loadavg } = require("os");
+const { response } = require("express");
 
 const saltRounds = 10;
 app.use(cors());
@@ -30,6 +37,30 @@ const static_path = path.join(__dirname, "/public")
 app.use(express.static(static_path))
 
 
+const ipinfoToken = 'bf73537cbb17e7'
+
+
+axios.get('https://ipinfo.io?token=' + ipinfoToken)
+
+    .then(async (response) => {
+        const existingLocation = await Location.findOne({ ip: response.data.ip });
+        if (existingLocation) {
+            console.log('Document with same IP address already exists');
+        }
+        else {
+            const location = new Location({
+                ip: response.data.ip,
+                region: response.data.region,
+                city: response.data.city,   
+                country: response.data.country,
+            })
+
+            location.save()
+            console.log("Location Saved")
+        }
+    })
+
+
 app.post('/sellerRegister', async (req, res) => {
 
     const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
@@ -37,6 +68,7 @@ app.post('/sellerRegister', async (req, res) => {
     const { nameOfOrganization, email, gst, pan, password, phone, address, firstName, lastName, tags, category, subCategory } = req.body
 
     const existingUser = await UserRegister.findOne({ email: req.body.email });
+
 
     if (firstName === '' || lastName === '' || email === '' || password === '' || phone === '' || address === '' || tags === '') {
         res.send({ message: "Fields must not be empty!" })
@@ -264,6 +296,9 @@ app.get('/:category/:subCategory', (req, res) => {
     });
 });
 
+
+
+
 app.get('/api/:category/:subCategory', (req, res) => {
 
     const { category, subCategory } = req.params;
@@ -277,6 +312,11 @@ app.get('/api/:category/:subCategory', (req, res) => {
         res.json(results);
     });
 });
+
+
+
+
+
 
 app.listen(port, () => {
     console.log('info', `Server is running on port ${port}`)
