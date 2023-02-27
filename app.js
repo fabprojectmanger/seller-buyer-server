@@ -51,7 +51,6 @@ app.post('/sellerRegister', async (req, res) => {
     else if (!passwordRegex.test(password)) {
         res.send({ message: "Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
     }
-
     else if (phone.length < 10) {
         res.send({ message: "Phone number must contain 10 characters" })
     }
@@ -158,6 +157,7 @@ app.post("/post", (req, res) => {
         res.send("Posted")
     }
 })
+
 
 app.post("/login", async (req, res) => {
 
