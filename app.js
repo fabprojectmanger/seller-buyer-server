@@ -108,7 +108,6 @@ app.post('/buyerRegister', async (req, res) => {
     }
 
     else {
-
         bcrypt.hash(password, saltRounds, (err, hash) => {
             if (err) {
                 console.log("hash error", err);
@@ -125,7 +124,6 @@ app.post('/buyerRegister', async (req, res) => {
             })
             buyerRegister.save();
             res.send("Register Successfully")
-
         })
     }
 })
@@ -144,7 +142,6 @@ app.post("/post", (req, res) => {
     }
 
     else {
-
         const postData = new Post({
             title: title,
             category: category,
@@ -221,21 +218,8 @@ app.get('/tags', (req, res) => {
         });
 });
 
-app.get('/posts/:tags', (req, res) => {
-    const tags = req.params.tags;
-
-    Post.find({ tags: tags })
-        .then(posts => {
-            res.json(posts);
-        })
-        .catch(error => {
-            console.error(error);
-            res.status(500).send('Error retrieving posts');
-        });
-});
-
 app.get('/tagPost', (req, res) => {
-    Post.find()
+    Post.find({})
         .then(posts => {
             res.json(posts);
         })
@@ -245,6 +229,54 @@ app.get('/tagPost', (req, res) => {
         });
 });
 
+app.get('/category', (req, res) => {
+    Post.distinct('category')
+        .then(subCategory => {
+            res.json(subCategory);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send('Error retrieving category');
+        });
+})
+
+
+app.get('/subCategory', (req, res) => {
+    Post.distinct('subCategory')
+        .then(subCategory => {
+            res.json(subCategory);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send('Error retrieving category');
+        });
+})
+app.get('/:category/:subCategory', (req, res) => {
+    const { category, subCategory } = req.params;
+
+    Post.find({ category }, (error, results) => {
+        if (error) {
+            console.error(error);
+            res.status(500).send('Internal server error');
+            return;
+        }
+        res.json(results);
+    });
+});
+
+app.get('/api/:category/:subCategory', (req, res) => {
+
+    const { category, subCategory } = req.params;
+
+    Post.find({ category, subCategory }, (error, results) => {
+        if (error) {
+            console.error(error);
+            res.status(500).send('Internal server error');
+            return;
+        }
+        res.json(results);
+    });
+});
 
 app.listen(port, () => {
     console.log('info', `Server is running on port ${port}`)
