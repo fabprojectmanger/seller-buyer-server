@@ -21,6 +21,7 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
+    "gatsby": "^5.7.0",
     "gst-verification": "^1.0.0",
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^5.0.0",
@@ -28,6 +29,7 @@
     "morgan": "^1.10.0",
     "nodemon": "^2.0.20",
     "react-geolocated": "^4.0.3",
+    "validator": "^13.9.0",
     "winston": "^3.8.2",
     "winston-mongodb": "^5.1.1"
   }
