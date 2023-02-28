@@ -17,12 +17,6 @@ const PostSchema = new mongoose.Schema({
     budget: {
         type: Number,
         required: true,
-        validate(value) {
-            if (value < 0) {
-                // throw new Error("Budget should not be negative")
-                return "Budget should not be negative"
-            }
-        }
     },
     description: {
         type: String,

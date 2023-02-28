@@ -22,7 +22,6 @@ const logger = createLogger({
             options: { useUnifiedTopology: true },
             db: process.env.MONGO_DATABASE,
             collection: "users",
-
         })
     ]
 })

@@ -9,16 +9,18 @@ const bcrypt = require("bcrypt");
 const axios = require('axios');
 const requestIp = require('request-ip');
 
-
 app.use(requestIp.mw());
 
-
 const UserRegister = require("../userlogs/model/register")
-
 const Post = require("../userlogs/model/postJob");
 const Location = require("../userlogs/model/location");
-const { loadavg } = require("os");
-const { response } = require("express");
+
+function getUsernameFromEmail(email) {
+    const emailArray = email.split("@");
+    const username = emailArray[0];
+    return username;
+}
+
 
 const saltRounds = 10;
 app.use(cors());
@@ -39,7 +41,6 @@ app.use(express.static(static_path))
 
 const ipinfoToken = 'bf73537cbb17e7'
 
-
 axios.get('https://ipinfo.io?token=' + ipinfoToken)
 
     .then(async (response) => {
@@ -51,7 +52,7 @@ axios.get('https://ipinfo.io?token=' + ipinfoToken)
             const location = new Location({
                 ip: response.data.ip,
                 region: response.data.region,
-                city: response.data.city,   
+                city: response.data.city,
                 country: response.data.country,
             })
 
@@ -60,15 +61,15 @@ axios.get('https://ipinfo.io?token=' + ipinfoToken)
         }
     })
 
-
 app.post('/sellerRegister', async (req, res) => {
 
     const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/
 
     const { nameOfOrganization, email, gst, pan, password, phone, address, firstName, lastName, tags, category, subCategory } = req.body
-
+    const username = getUsernameFromEmail(email);
     const existingUser = await UserRegister.findOne({ email: req.body.email });
-
 
     if (firstName === '' || lastName === '' || email === '' || password === '' || phone === '' || address === '' || tags === '') {
         res.send({ message: "Fields must not be empty!" })
@@ -81,7 +82,19 @@ app.post('/sellerRegister', async (req, res) => {
         res.send({ message: "Email already in use" })
     }
     else if (!passwordRegex.test(password)) {
-        res.send({ message: "Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
+        res.send({ message: "Weak Password" })
+    }
+    else if (gst.length < 15) {
+        res.send({ message: "GST  number must contain 15 characters" })
+    }
+    else if (!gstRegex.test(gst)) {
+        res.send({ message: "GST  number invalid" })
+    }
+    else if (pan.length < 10) {
+        res.send({ message: "PAN number must contain 10 characters" })
+    }
+    else if (!panRegex.test(pan)) {
+        res.send({ message: "PAN number invalid" })
     }
     else if (phone.length < 10) {
         res.send({ message: "Phone number must contain 10 characters" })
@@ -107,6 +120,7 @@ app.post('/sellerRegister', async (req, res) => {
                 tags: tags,
                 category: category,
                 subCategory: subCategory,
+                username: username
             })
             newUser.save()
             res.send("Register Successfully")
@@ -120,6 +134,7 @@ app.post('/buyerRegister', async (req, res) => {
     const existingUser = await UserRegister.findOne({ email: req.body.email });
 
     const { firstName, lastName, email, password, address, phone, tags, } = req.body
+    const username = getUsernameFromEmail(email);
 
     if (firstName === '' || lastName === '' || email === '' || password === '' || phone === '' || address === '' || tags === '') {
         res.send({ message: "Fields must not be empty!" })
@@ -133,7 +148,7 @@ app.post('/buyerRegister', async (req, res) => {
     }
 
     else if (!passwordRegex.test(password)) {
-        res.send({ message: " Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
+        res.send({ message: "Weak Password" })
     }
     else if (phone.length < 10) {
         res.send({ message: "Phone number must contain 10 characters" })
@@ -153,6 +168,7 @@ app.post('/buyerRegister', async (req, res) => {
                 phone: phone,
                 address: address,
                 tags: tags,
+                username: username
             })
             buyerRegister.save();
             res.send("Register Successfully")
@@ -231,10 +247,11 @@ app.post("/getData", (req, res) => {
     })
 })
 
-app.post("/getSellerPost", (req, res) => {
-    Post.find({}, (err, result) => {
+app.post("/sellerPost", (req, res) => {
+    const { email } = req.body
+    Post.find({ email: email }, (err, result) => {
         if (result) {
-            res.send(result)
+            res.send({ result: result })
         }
     })
 })
@@ -272,7 +289,6 @@ app.get('/category', (req, res) => {
         });
 })
 
-
 app.get('/subCategory', (req, res) => {
     Post.distinct('subCategory')
         .then(subCategory => {
@@ -283,21 +299,6 @@ app.get('/subCategory', (req, res) => {
             res.status(500).send('Error retrieving category');
         });
 })
-app.get('/:category/:subCategory', (req, res) => {
-    const { category, subCategory } = req.params;
-
-    Post.find({ category }, (error, results) => {
-        if (error) {
-            console.error(error);
-            res.status(500).send('Internal server error');
-            return;
-        }
-        res.json(results);
-    });
-});
-
-
-
 
 app.get('/api/:category/:subCategory', (req, res) => {
 
@@ -312,9 +313,6 @@ app.get('/api/:category/:subCategory', (req, res) => {
         res.json(results);
     });
 });
-
-
-
 
 
 
