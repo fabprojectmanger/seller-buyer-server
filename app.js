@@ -8,6 +8,9 @@ const logger = require('./config/logger')
 const bcrypt = require("bcrypt");
 const axios = require('axios');
 const requestIp = require('request-ip');
+const multer = require('multer')
+const upload = multer({ dest: 'uploads/' })
+
 
 app.use(requestIp.mw());
 
@@ -21,11 +24,11 @@ function getUsernameFromEmail(email) {
     return username;
 }
 
-
 const saltRounds = 10;
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser())
+app.use('/uploads', express.static('uploads'))
 app.get("/message", (req, res) => {
     res.json({ message: "Hello from server!" });
 });
@@ -33,10 +36,10 @@ app.get("/message", (req, res) => {
 require("./db/conn");
 const port = process.env.port || 3000;
 
-const static_path = path.join(__dirname, "/public")
+// const static_path = path.join(__dirname, "/public")
 
 
-app.use(express.static(static_path))
+// app.use(express.static(static_path))
 
 
 const ipinfoToken = 'bf73537cbb17e7'
@@ -176,18 +179,18 @@ app.post('/buyerRegister', async (req, res) => {
     }
 })
 
-app.post("/post", (req, res) => {
-    const { title, category, subCategory, phone, budget, location, description, tags, email } = req.body
-
+app.post("/post", upload.single('image'), (req, res) => {
+    const { title, category, subCategory, phone, budget, location, description, tags, email, } = req.body
+    const image = req.file.path
     if (title === "" || category === "" || subCategory === "" || phone === "" || budget === "" || location === "" || description === "" || tags === "") {
         res.send({ message: "Fields must not be empty!" })
     }
     else if (budget < 0) {
         res.send({ message: "Budget should not be negative" })
     }
-    else if (phone.length < 10) {
-        res.send({ message: "Phone number must contain 10 characters" })
-    }
+    // else if (phone.length < 10) {
+    //     res.send({ message: "Phone number must contain 10 characters" })
+    // }
 
     else {
         const postData = new Post({
@@ -199,7 +202,9 @@ app.post("/post", (req, res) => {
             location: location,
             description: description,
             tags: tags,
-            email: email
+            email: email,
+            image: image
+
         })
         postData.save()
         res.send("Posted")
