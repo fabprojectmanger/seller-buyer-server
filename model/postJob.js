@@ -44,6 +44,9 @@ const PostSchema = new mongoose.Schema({
         required: true
 
     }],
+    image : {
+        type : String
+    }
 })
 
 const Post = new mongoose.model("Post", PostSchema)
