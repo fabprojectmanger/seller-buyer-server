@@ -14,10 +14,6 @@ const PostSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    budget: {
-        type: Number,
-        required: true,
-    },
     description: {
         type: String,
         required: true
@@ -36,17 +32,28 @@ const PostSchema = new mongoose.Schema({
     subCategory: {
         type: String,
         required: true
-
     },
 
     tags: [{
         type: String,
         required: true
-
     }],
-    image : {
-        type : String
+    image: {
+        type: String
+    },
+    unit: {
+        type: String
+    },
+    unit: {
+        type: String
+    },
+    videoLink: {
+        type: String
+    },
+    pricePerUnit: {
+        type:Number
     }
+
 })
 
 const Post = new mongoose.model("Post", PostSchema)
