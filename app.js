@@ -180,14 +180,12 @@ app.post('/buyerRegister', async (req, res) => {
 })
 
 app.post("/post", upload.single('image'), (req, res) => {
-    const { title, category, subCategory, unit, location, description, tags, email, videoLink } = req.body
+    const { title, category, subCategory, unit, location, description, tags,price, email, videoLink, pricePerUnit } = req.body
     const image = req.file?.path
-    if (title === "" || category === "" || subCategory === "" || phone === "" || location === "" || description === "" || tags === "") {
+    if (title === "" || category === "" || subCategory === "" || unit === "" || location === "" || description === "" || tags === "") {
         res.send({ message: "Fields must not be empty!" })
     }
-    else if (budget < 0) {
-        res.send({ message: "Budget should not be negative" })
-    }
+
 
     else {
         const postData = new Post({
@@ -195,13 +193,14 @@ app.post("/post", upload.single('image'), (req, res) => {
             category: category,
             subCategory: subCategory,
             unit: unit,
-            budget: budget,
+            price: price,
             location: location,
             description: description,
             tags: tags,
             email: email,
             image: image,
-            videoLink: videoLink
+            videoLink: videoLink,
+            pricePerUnit :pricePerUnit 
         })
         postData.save()
         res.send({ posted: true })
