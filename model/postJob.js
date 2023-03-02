@@ -19,10 +19,7 @@ const PostSchema = new mongoose.Schema({
         required: true
     },
 
-    phone: {
-        type: Number,
-        required: true,
-    },
+
     category: {
         type: String,
         required: true
@@ -41,7 +38,7 @@ const PostSchema = new mongoose.Schema({
     image: {
         type: String
     },
-    unit: {
+    price: {
         type: String
     },
     unit: {
