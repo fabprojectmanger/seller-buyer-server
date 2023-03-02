@@ -90,15 +90,15 @@ app.post('/sellerRegister', async (req, res) => {
     else if (gst.length < 15) {
         res.send({ message: "GST  number must contain 15 characters" })
     }
-    else if (!gstRegex.test(gst)) {
-        res.send({ message: "GST  number invalid" })
-    }
+    // else if (!gstRegex.test(gst)) {
+    //     res.send({ message: "GST  number invalid" })
+    // }
     else if (pan.length < 10) {
         res.send({ message: "PAN number must contain 10 characters" })
     }
-    else if (!panRegex.test(pan)) {
-        res.send({ message: "PAN number invalid" })
-    }
+    // else if (!panRegex.test(pan)) {
+    //     res.send({ message: "PAN number invalid" })
+    // }
     else if (phone.length < 10) {
         res.send({ message: "Phone number must contain 10 characters" })
     }
@@ -180,34 +180,31 @@ app.post('/buyerRegister', async (req, res) => {
 })
 
 app.post("/post", upload.single('image'), (req, res) => {
-    const { title, category, subCategory, phone, budget, location, description, tags, email, } = req.body
-    const image = req.file.path
-    if (title === "" || category === "" || subCategory === "" || phone === "" || budget === "" || location === "" || description === "" || tags === "") {
+    const { title, category, subCategory, unit, location, description, tags, email, videoLink } = req.body
+    const image = req.file?.path
+    if (title === "" || category === "" || subCategory === "" || phone === "" || location === "" || description === "" || tags === "") {
         res.send({ message: "Fields must not be empty!" })
     }
     else if (budget < 0) {
         res.send({ message: "Budget should not be negative" })
     }
-    // else if (phone.length < 10) {
-    //     res.send({ message: "Phone number must contain 10 characters" })
-    // }
 
     else {
         const postData = new Post({
             title: title,
             category: category,
             subCategory: subCategory,
-            phone: phone,
+            unit: unit,
             budget: budget,
             location: location,
             description: description,
             tags: tags,
             email: email,
-            image: image
-
+            image: image,
+            videoLink: videoLink
         })
         postData.save()
-        res.send("Posted")
+        res.send({ posted: true })
     }
 })
 

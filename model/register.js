@@ -42,7 +42,7 @@ const registerSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-  
+
     phone: {
         type: Number,
         required: true,
@@ -64,7 +64,6 @@ const registerSchema = new mongoose.Schema({
 
     }],
 })
-
 
 const UserRegister = new mongoose.model("UserRegister", registerSchema)
 
