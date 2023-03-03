@@ -1,15 +1,11 @@
 const { mongoose } = require("mongoose")
 
-const PostSchema = new mongoose.Schema({
+const buyerPostSchema = new mongoose.Schema({
     title: {
         type: String,
         required: true,
     },
 
-    email: {
-        type: String,
-        required: true,
-    },
     location: {
         type: String,
         required: true
@@ -18,7 +14,6 @@ const PostSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-
 
     category: {
         type: String,
@@ -35,23 +30,13 @@ const PostSchema = new mongoose.Schema({
         type: String,
         required: true
     }],
-    image: {
+    budget: {
+        type: Number
+    },
+    quantity: {
         type: String
     },
-    price: {
-        type: String
-    },
-    unit: {
-        type: String
-    },
-    videoLink: {
-        type: String
-    },
-    pricePerUnit: {
-        type:Number
-    }
-
 })
 
-const Post = new mongoose.model("Post", PostSchema)
-module.exports = Post
+const BuyerPost = new mongoose.model("BuyerPost", buyerPostSchema)
+module.exports = BuyerPost

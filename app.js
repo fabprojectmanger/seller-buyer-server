@@ -1,68 +1,87 @@
-const express = require("express");
+const express = require('express');
 const app = express();
-const path = require("path")
-const cors = require("cors");
-const cookieParser = require('cookie-parser')
-const { isEmail } = require('validator');
-const logger = require('./config/logger')
-const bcrypt = require("bcrypt");
-const axios = require('axios');
-const requestIp = require('request-ip');
+app.use(express.json());
+
+const port = process.env.port || 3000
 const multer = require('multer')
+const axios = require('axios');
 const upload = multer({ dest: 'uploads/' })
 
-
-app.use(requestIp.mw());
-
-const UserRegister = require("../userlogs/model/register")
-const Post = require("../userlogs/model/postJob");
-const Location = require("../userlogs/model/location");
+const mongoose = require('mongoose');
+const Product = require('./model/products');
+const UserRegister = require('./model/register')
+const BuyerPost = require('./model/buyerPost')
+const Location = require('./model/Location');
+const url = 'mongodb+srv://developer:developer@node.j2lxvsn.mongodb.net/data';
 
 function getUsernameFromEmail(email) {
     const emailArray = email.split("@");
     const username = emailArray[0];
     return username;
 }
+mongoose.set('strictQuery', false)
+mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true,  });
 
-const saltRounds = 10;
-app.use(cors());
-app.use(express.json());
-app.use(cookieParser())
-app.use('/uploads', express.static('uploads'))
-app.get("/message", (req, res) => {
-    res.json({ message: "Hello from server!" });
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function () {
+    console.log('Database connected!');
+})
+
+app.get('/', (req, res) => {
+    res.send('Hello, World!');
 });
 
-require("./db/conn");
-const port = process.env.port || 3000;
 
-// const static_path = path.join(__dirname, "/public")
+app.post("/addProduct", upload.single('image'), (req, res) => {
+    const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, name, nameOfOrganization, phone } = req.body
+    const image = req.file?.path
+    if (title === "" || category === "" || subCategory === "" || unit === "" || location === "" || description === "" || tags === "") {
+        res.send({ message: "Fields must not be empty!" })
+    }
 
+    else {
+        const addProduct = new Product({
+            title: title,
+            category: category,
+            subCategory: subCategory,
+            unit: unit,
+            price: price,
+            location: location,
+            description: description,
+            tags: tags,
+            email: email,
+            image: image,
+            videoLink: videoLink,
+            pricePerUnit: pricePerUnit,
+            name: name,
+            nameOfOrganization: nameOfOrganization,
+            phone: phone
+        })
+        addProduct.save()
+        res.send({ added: true })
+    }
+})
 
-// app.use(express.static(static_path))
+app.post("/buyerPost", (req, res) => {
 
+    const { title, category, subCategory, location, description, tags, quantity, budget } = req.body
 
-const ipinfoToken = 'bf73537cbb17e7'
-
-axios.get('https://ipinfo.io?token=' + ipinfoToken)
-
-    .then(async (response) => {
-        const existingLocation = await Location.findOne({ ip: response.data.ip });
-        if (existingLocation) {
-            console.log('Document with same IP address already exists');
-        }
-        else {
-            const location = new Location({
-                ip: response.data.ip,
-                region: response.data.region,
-                city: response.data.city,
-                country: response.data.country,
-            })
-
-            location.save()
-            console.log("Location Saved")
-        }
+    const addPost = new BuyerPost({
+        title: title,
+        category: category,
+        subCategory: subCategory,
+        unit: unit,
+        price: price,
+        location: location,
+        description: description,
+        tags: tags,
+        quantity: quantity,
+        budget: budget
     })
+    addPost.save()
+    res.send({ added: true })
+})
 
 app.post('/sellerRegister', async (req, res) => {
 
@@ -130,7 +149,6 @@ app.post('/sellerRegister', async (req, res) => {
         })
     }
 })
-
 app.post('/buyerRegister', async (req, res) => {
 
     const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
@@ -178,36 +196,6 @@ app.post('/buyerRegister', async (req, res) => {
         })
     }
 })
-
-app.post("/post", upload.single('image'), (req, res) => {
-    const { title, category, subCategory, unit, location, description, tags,price, email, videoLink, pricePerUnit } = req.body
-    const image = req.file?.path
-    if (title === "" || category === "" || subCategory === "" || unit === "" || location === "" || description === "" || tags === "") {
-        res.send({ message: "Fields must not be empty!" })
-    }
-
-
-    else {
-        const postData = new Post({
-            title: title,
-            category: category,
-            subCategory: subCategory,
-            unit: unit,
-            price: price,
-            location: location,
-            description: description,
-            tags: tags,
-            email: email,
-            image: image,
-            videoLink: videoLink,
-            pricePerUnit :pricePerUnit 
-        })
-        postData.save()
-        res.send({ posted: true })
-    }
-})
-
-
 app.post("/login", async (req, res) => {
 
     const { email, password } = req.body
@@ -231,47 +219,10 @@ app.post("/login", async (req, res) => {
     })
 })
 
-app.use((req, res, next) => {
-    let oldSend = res.send;
-    res.send = function (data) {
-        oldSend.apply(res, arguments)
-    }
-    next();
-})
-
-app.post("/getData", (req, res) => {
-    const { email } = req.body
-    UserRegister.findOne({ email: email }, (err, result) => {
-        if (result) {
-            res.send({ message: "Login Successful", result: result, loggedIn: true })
-        }
-    })
-})
-
-app.post("/sellerPost", (req, res) => {
-    const { email } = req.body
-    Post.find({ email: email }, (err, result) => {
-        if (result) {
-            res.send({ result: result })
-        }
-    })
-})
-
-app.get('/tags', (req, res) => {
-    Post.distinct('tags')
-        .then(tags => {
-            res.json(tags);
-        })
-        .catch(error => {
-            console.error(error);
-            res.status(500).send('Error retrieving tags');
-        });
-});
-
-app.get('/tagPost', (req, res) => {
-    Post.find({})
-        .then(posts => {
-            res.json(posts);
+app.get('/allProducts', (req, res) => {
+    Product.find({})
+        .then(products => {
+            res.json(products);
         })
         .catch(error => {
             console.error(error);
@@ -279,44 +230,29 @@ app.get('/tagPost', (req, res) => {
         });
 });
 
-app.get('/category', (req, res) => {
-    Post.distinct('category')
-        .then(subCategory => {
-            res.json(subCategory);
-        })
-        .catch(error => {
-            console.error(error);
-            res.status(500).send('Error retrieving category');
-        });
-})
 
-app.get('/subCategory', (req, res) => {
-    Post.distinct('subCategory')
-        .then(subCategory => {
-            res.json(subCategory);
-        })
-        .catch(error => {
-            console.error(error);
-            res.status(500).send('Error retrieving category');
-        });
-})
+const ipinfoToken = 'bf73537cbb17e7'
 
-app.get('/api/:category/:subCategory', (req, res) => {
+axios.get('https://ipinfo.io?token=' + ipinfoToken)
 
-    const { category, subCategory } = req.params;
-
-    Post.find({ category, subCategory }, (error, results) => {
-        if (error) {
-            console.error(error);
-            res.status(500).send('Internal server error');
-            return;
+    .then(async (response) => {
+        const existingLocation = await Location.findOne({ ip: response.data.ip });
+        if (existingLocation) {
+            console.log('Document with same IP address already exists');
         }
-        res.json(results);
-    });
-});
+        else {
+            const location = new Location({
+                ip: response.data.ip,
+                region: response.data.region,
+                city: response.data.city,
+                country: response.data.country,
+            })
 
-
+            location.save()
+            console.log("Location Saved")
+        }
+    })
 
 app.listen(port, () => {
-    console.log('info', `Server is running on port ${port}`)
+    console.log(`Server is running on port ${port}`)
 })
