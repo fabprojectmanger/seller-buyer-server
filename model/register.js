@@ -7,10 +7,6 @@ const registerSchema = new mongoose.Schema({
         required: true,
     },
 
-    nameOfOrganization: {
-        type: String,
-        unique: true,
-    },
     email: {
         type: String,
         unique: true,
@@ -18,16 +14,16 @@ const registerSchema = new mongoose.Schema({
     },
     gst: {
         type: String,
-        unique: true
     },
     pan: {
         type: String,
-        unique: true
     },
 
     address: {
         type: String,
-        required: true,
+    },
+    nameOfOrganization: {
+        type: String,
     },
 
     password: {
@@ -41,20 +37,9 @@ const registerSchema = new mongoose.Schema({
         unique: true
 
     },
-    category: {
-        type: String,
-
-    },
-
-    subCategory: {
-        type: String,
-    },
-
-    tags: [{
-        type: String,
-        required: true
-
-    }],
+    role:{
+        type:String
+    }
 })
 
 const UserRegister = new mongoose.model("UserRegister", registerSchema)

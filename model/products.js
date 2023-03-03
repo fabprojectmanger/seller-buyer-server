@@ -8,7 +8,6 @@ const ProductSchema = new mongoose.Schema({
 
     email: {
         type: String,
-        required: true,
     },
     location: {
         type: String,
