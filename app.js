@@ -16,6 +16,7 @@ const BuyerPost = require('./model/buyerPost')
 const Location = require('./model/Location');
 const url = 'mongodb+srv://developer:developer@node.j2lxvsn.mongodb.net/data';
 app.use(cors());
+app.use('/uploads', express.static('uploads'))
 
 function getUsernameFromEmail(email) {
     const emailArray = email.split("@");
@@ -63,14 +64,13 @@ app.post("/addProduct", upload.single('image'), (req, res) => {
 
 app.post("/buyerPost", (req, res) => {
 
-    const { title, category, subCategory, location, description, tags, quantity, budget } = req.body
+    const { title, category, subCategory, location, description, tags, quantity, budget,unit } = req.body
 
     const addPost = new BuyerPost({
         title: title,
         category: category,
         subCategory: subCategory,
         unit: unit,
-        price: price,
         location: location,
         description: description,
         tags: tags,
@@ -111,7 +111,6 @@ app.post('/buyer-register', (req, res) => {
 
     const { fullName, email, password, phone } = req.body
 
-
     bcrypt.hash(password, saltRounds, (err, hash) => {
         if (err) {
             console.log("hash error", err);
@@ -151,6 +150,18 @@ app.post("/login", async (req, res) => {
     })
 })
 
+
+app.get('/category', (req, res) => {
+    Product.distinct('category')
+        .then(category => {
+            res.json(category);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send('Error retrieving tags');
+        });
+})
+
 app.get('/allProducts', (req, res) => {
     Product.find({})
         .then(products => {
@@ -161,6 +172,16 @@ app.get('/allProducts', (req, res) => {
             res.status(500).send('Error retrieving products');
         });
 });
+
+
+app.post("/sellerProducts", (req, res) => {
+    const { email } = req.body
+    Product.find({ email: email }, (err, result) => {
+        if (result) {
+            res.send({ result: result })
+        }
+    })
+})
 
 app.get('/buyerPosts', (req, res) => {
     BuyerPost.find({})
