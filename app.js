@@ -248,7 +248,6 @@ app.post("/profile", (req, res) => {
     })
 })
 
-
 app.get('/buyerPosts', (req, res) => {
     BuyerPost.find({})
         .then(posts => {
