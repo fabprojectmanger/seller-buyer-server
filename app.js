@@ -2,13 +2,18 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 require('dotenv').config();
-const port = process.env.port || 3000
-const multer = require('multer')
+const port = process.env.port || 3000;
+const multer = require('multer');
 const axios = require('axios');
-const upload = multer({ dest: 'uploads/' })
+const upload = multer({ dest: 'uploads/' });
 const cors = require("cors");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const http = require("http");
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
+
 const mongoose = require('mongoose');
 const mongodb = require('mongodb')
 const Product = require('./model/products');
@@ -34,10 +39,31 @@ db.once('open', function () {
     console.log('Database connected!');
 })
 
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:8000",
+        methods: ["GET", "POST"]
+    }
+})
+
+io.on("connection", (socket) => {
+    socket.on("join_room", (data) => {
+        socket.join(data);
+        console.log(`User with ID: ${socket.id} has logged in!`)
+    })
+
+    socket.on("send_message", (data) => {
+        socket.to(data.room).emit("receive_message", data);
+    })
+
+    socket.on("disconnect", () => {
+        console.log("User Disconnected", socket.id)
+    })
+})
+
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
-
 
 app.post("/addProduct", upload.single('image'), (req, res) => {
     const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, phone } = req.body
@@ -62,7 +88,6 @@ app.post("/addProduct", upload.single('image'), (req, res) => {
     res.send({ added: true })
 
 })
-
 
 app.post("/buyerPost", (req, res) => {
 
@@ -132,6 +157,7 @@ app.post("/seller-register", async (req, res) => {
         })
     }
 })
+
 app.post('/buyer-register', async (req, res) => {
 
     const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
@@ -198,6 +224,7 @@ app.post("/login", async (req, res) => {
 })
 
 
+
 app.get('/category', (req, res) => {
     Product.distinct('category')
         .then(category => {
@@ -219,7 +246,6 @@ app.get('/allProducts', (req, res) => {
             res.status(500).send('Error retrieving products');
         });
 });
-
 
 app.post("/sellerProducts", (req, res) => {
     const { email } = req.body
@@ -292,5 +318,9 @@ axios.get('https://ipinfo.io?token=' + ipinfoToken)
     })
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`)
-})
+    console.log(`Server is running on port ${port}`);
+});
+
+server.listen(3001, () => {
+    console.log("Chat Server running!");
+});
