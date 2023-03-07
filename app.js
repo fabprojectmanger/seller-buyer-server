@@ -10,8 +10,10 @@ const cors = require("cors");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const mongoose = require('mongoose');
+const mongodb = require('mongodb')
 const Product = require('./model/products');
 const UserRegister = require('./model/register')
+const { isEmail } = require('validator');
 const BuyerPost = require('./model/buyerPost')
 const Location = require('./model/Location');
 const url = 'mongodb+srv://developer:developer@node.j2lxvsn.mongodb.net/data';
@@ -64,7 +66,7 @@ app.post("/addProduct", upload.single('image'), (req, res) => {
 
 app.post("/buyerPost", (req, res) => {
 
-    const { title, category, subCategory, location, description, tags, quantity, budget,unit } = req.body
+    const { title, category, subCategory, location, description, tags, quantity, budget, unit, email } = req.body
 
     const addPost = new BuyerPost({
         title: title,
@@ -75,59 +77,104 @@ app.post("/buyerPost", (req, res) => {
         description: description,
         tags: tags,
         quantity: quantity,
-        budget: budget
+        budget: budget,
+        email: email
     })
     addPost.save()
     res.send({ added: true })
 })
 
 
-app.post("/seller-register", (req, res) => {
+app.post("/seller-register", async (req, res) => {
+
 
     const { nameOfOrganization, email, gst, pan, password, phone, address, fullName, } = req.body
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
+    const existingUser = await UserRegister.findOne({ email: req.body.email });
 
-    bcrypt.hash(password, saltRounds, (err, hash) => {
-        if (err) {
-            console.log("hash error", err);
-        }
+    if (fullName === '' || email === '' || password === '' || phone === '' || nameOfOrganization === '' || gst === "" || pan === "" || address === "") {
+        res.send({ message: "Fields must not be empty!" })
+    }
 
-        const sellerRegister = new UserRegister({
-            fullName: fullName,
-            nameOfOrganization: nameOfOrganization,
-            email: email,
-            gst: gst,
-            pan: pan,
-            password: hash,
-            phone: phone,
-            address: address,
-            role: 'Seller'
+    else if (!isEmail(email)) {
+        res.send({ message: "Invalid Email" })
+    }
+    else if (existingUser) {
+        res.send({ message: "Email already in use" })
+    }
+
+    else if (!passwordRegex.test(password)) {
+        res.send({ message: " Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
+    }
+    else if (phone.length < 10) {
+        res.send({ message: "Phone number must contain 10 characters" })
+    }
+    else {
+
+        bcrypt.hash(password, saltRounds, (err, hash) => {
+            if (err) {
+                console.log("hash error", err);
+            }
+
+            const sellerRegister = new UserRegister({
+                fullName: fullName,
+                nameOfOrganization: nameOfOrganization,
+                email: email,
+                gst: gst,
+                pan: pan,
+                password: hash,
+                phone: phone,
+                address: address,
+                role: 'Seller'
+            })
+            sellerRegister.save()
+            res.send("Register Successfully")
         })
-        sellerRegister.save()
-        res.send({ register: true })
-    })
-
+    }
 })
-app.post('/buyer-register', (req, res) => {
+app.post('/buyer-register', async (req, res) => {
 
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
+    const existingUser = await UserRegister.findOne({ email: req.body.email });
     const { fullName, email, password, phone } = req.body
 
-    bcrypt.hash(password, saltRounds, (err, hash) => {
-        if (err) {
-            console.log("hash error", err);
-        }
+    if (fullName === '' || email === '' || password === '' || phone === '') {
+        res.send({ message: "Fields must not be empty!" })
+    }
 
-        const buyerRegister = new UserRegister({
-            fullName: fullName,
-            email: email,
-            password: hash,
-            phone: phone,
-            role: 'Buyer'
+    else if (!isEmail(email)) {
+        res.send({ message: "Invalid Email" })
+    }
+    else if (existingUser) {
+        res.send({ message: "Email already in use" })
+    }
+
+    else if (!passwordRegex.test(password)) {
+        res.send({ message: " Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
+    }
+    else if (phone.length < 10) {
+        res.send({ message: "Phone number must contain 10 characters" })
+    }
+    else {
+
+        bcrypt.hash(password, saltRounds, (err, hash) => {
+            if (err) {
+                console.log("hash error", err);
+            }
+
+            const buyerRegister = new UserRegister({
+                fullName: fullName,
+                email: email,
+                password: hash,
+                phone: phone,
+                role: 'Buyer'
+            })
+            buyerRegister.save();
+            res.send("Register Successfully")
         })
-        buyerRegister.save();
-        res.send({ register: true })
-    })
-
+    }
 })
+
 app.post("/login", async (req, res) => {
 
     const { email, password } = req.body
@@ -183,6 +230,25 @@ app.post("/sellerProducts", (req, res) => {
     })
 })
 
+app.post("/buyerRequirements", (req, res) => {
+    const { email } = req.body
+    BuyerPost.find({ email: email }, (err, result) => {
+        if (result) {
+            res.send({ result: result })
+        }
+    })
+})
+
+app.post("/profile", (req, res) => {
+    const { email } = req.body
+    UserRegister.findOne({ email: email }, (err, result) => {
+        if (result) {
+            res.send({ message: "Login Successful", result: result, loggedIn: true })
+        }
+    })
+})
+
+
 app.get('/buyerPosts', (req, res) => {
     BuyerPost.find({})
         .then(posts => {
@@ -192,6 +258,16 @@ app.get('/buyerPosts', (req, res) => {
             res.status(500).send('Error retrieving posts');
         });
 })
+
+app.delete('/buyerPost/:id', async (req, res) => {
+    const result = await BuyerPost.deleteOne({ _id: new mongodb.ObjectId(req.params.id) })
+    res.send(result)
+})
+
+// app.delete('/products/:id', async (req, res) => {
+//     const result = await Product.deleteOne({ _id: new mongodb.ObjectId(req.params.id) })
+//     res.send(result)
+// })
 
 
 const ipinfoToken = 'bf73537cbb17e7'

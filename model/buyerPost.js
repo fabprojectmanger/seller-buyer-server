@@ -36,6 +36,9 @@ const buyerPostSchema = new mongoose.Schema({
     quantity: {
         type: String
     },
+    email: {
+        type:String
+    }
 })
 
 const BuyerPost = new mongoose.model("BuyerPost", buyerPostSchema)
