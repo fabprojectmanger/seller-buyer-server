@@ -21,7 +21,6 @@ const UserRegister = require('./model/register')
 const { isEmail } = require('validator');
 const BuyerPost = require('./model/buyerPost')
 const Location = require('./model/Location');
-const url = 'mongodb+srv://developer:developer@node.j2lxvsn.mongodb.net/data';
 app.use(cors());
 app.use('/uploads', express.static('uploads'))
 
@@ -31,7 +30,7 @@ function getUsernameFromEmail(email) {
     return username;
 }
 mongoose.set('strictQuery', false)
-mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true, });
+mongoose.connect(process.env.MONGODB_DATABASE, { useNewUrlParser: true, useUnifiedTopology: true, });
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
@@ -41,7 +40,7 @@ db.once('open', function () {
 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:8000",
+        origin: "https://deploy-preview-9--seller-buyer.netlify.app",
         methods: ["GET", "POST"]
     }
 })
@@ -66,7 +65,7 @@ app.get('/', (req, res) => {
 });
 
 app.post("/addProduct", upload.single('image'), (req, res) => {
-    const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, phone } = req.body
+    const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, } = req.body
     const image = req.file?.path
 
     const addProduct = new Product({
@@ -82,7 +81,6 @@ app.post("/addProduct", upload.single('image'), (req, res) => {
         image: image,
         videoLink: videoLink,
         pricePerUnit: pricePerUnit,
-        phone: phone
     })
     addProduct.save()
     res.send({ added: true })
@@ -236,6 +234,7 @@ app.get('/category', (req, res) => {
         });
 })
 
+
 app.get('/allProducts', (req, res) => {
     Product.find({})
         .then(products => {
@@ -284,15 +283,17 @@ app.get('/buyerPosts', (req, res) => {
         });
 })
 
-app.delete('/buyerPost/:id', async (req, res) => {
-    const result = await BuyerPost.deleteOne({ _id: new mongodb.ObjectId(req.params.id) })
-    res.send(result)
-})
 
-// app.delete('/products/:id', async (req, res) => {
-//     const result = await Product.deleteOne({ _id: new mongodb.ObjectId(req.params.id) })
-//     res.send(result)
-// })
+app.delete('/buyerPost/:id', async (req, res) => {
+    try {
+        const result = await BuyerPost.deleteOne({ _id: new mongodb.ObjectId(req.params.id) })
+        res.send(result);
+    } catch (err) {
+        console.error(err);
+        res.status(400).send('Invalid ID');
+    }
+});
+
 
 
 const ipinfoToken = 'bf73537cbb17e7'
@@ -316,6 +317,48 @@ axios.get('https://ipinfo.io?token=' + ipinfoToken)
             console.log("Location Saved")
         }
     })
+
+
+app.get("/getRequirement", (req, res) => {
+    BuyerPost.aggregate([
+        {
+            $lookup: {
+                from: 'products',
+                let: {
+                    category: '$category',
+                    subCategory: '$subCategory',
+                    tags: '$tags'
+                },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $or: [
+                                    { $eq: ["$category", "$$category"] },
+                                    { $eq: ["$subCategory", "$$subCategory"] },
+                                    { $in: ["$tags", "$$tags"] }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                as: 'relatedProducts'
+            }
+        }
+
+
+
+    ], (err, results) => {
+        if (err) {
+            console.error(err);
+        } else {
+            res.send(results);
+        }
+    });
+
+})
+
+
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
