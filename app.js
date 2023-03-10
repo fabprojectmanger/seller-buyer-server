@@ -65,7 +65,7 @@ app.get('/', (req, res) => {
 });
 
 app.post("/addProduct", upload.single('image'), (req, res) => {
-    const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, } = req.body
+    const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName } = req.body
     const image = req.file?.path
 
     const addProduct = new Product({
@@ -81,6 +81,8 @@ app.post("/addProduct", upload.single('image'), (req, res) => {
         image: image,
         videoLink: videoLink,
         pricePerUnit: pricePerUnit,
+        nameOfOrganization: nameOfOrganization,
+        fullName: fullName
     })
     addProduct.save()
     res.send({ added: true })
@@ -284,19 +286,9 @@ app.get('/buyerPosts', (req, res) => {
 })
 
 
-app.delete('/buyerPost/:id', async (req, res) => {
-    try {
-        const result = await BuyerPost.deleteOne({ _id: new mongodb.ObjectId(req.params.id) })
-        res.send(result);
-    } catch (err) {
-        console.error(err);
-        res.status(400).send('Invalid ID');
-    }
-});
-
-
 
 const ipinfoToken = 'bf73537cbb17e7'
+
 
 axios.get('https://ipinfo.io?token=' + ipinfoToken)
 
@@ -314,9 +306,24 @@ axios.get('https://ipinfo.io?token=' + ipinfoToken)
             })
 
             location.save()
+
             console.log("Location Saved")
         }
     })
+
+app.delete('/buyerpost/:id', async (req, res) => {
+    const id = req.params.id
+    await BuyerPost.findOneAndDelete(id).exec()
+    res.send("Deleted")
+});
+app.delete('/products/:id', async (req, res) => {
+    const id = req.params.id
+    await Product.findOneAndDelete(id).exec()
+    res.send("Deleted")
+});
+
+
+
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

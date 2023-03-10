@@ -48,7 +48,7 @@ const ProductSchema = new mongoose.Schema({
     pricePerUnit: {
         type: Number
     },
-    name: {
+    fullName: {
         type: String
     },
     nameOfOrganization: {
