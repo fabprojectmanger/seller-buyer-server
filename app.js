@@ -318,48 +318,6 @@ axios.get('https://ipinfo.io?token=' + ipinfoToken)
         }
     })
 
-
-app.get("/getRequirement", (req, res) => {
-    BuyerPost.aggregate([
-        {
-            $lookup: {
-                from: 'products',
-                let: {
-                    category: '$category',
-                    subCategory: '$subCategory',
-                    tags: '$tags'
-                },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $or: [
-                                    { $eq: ["$category", "$$category"] },
-                                    { $eq: ["$subCategory", "$$subCategory"] },
-                                    { $in: ["$tags", "$$tags"] }
-                                ]
-                            }
-                        }
-                    }
-                ],
-                as: 'relatedProducts'
-            }
-        }
-
-
-
-    ], (err, results) => {
-        if (err) {
-            console.error(err);
-        } else {
-            res.send(results);
-        }
-    });
-
-})
-
-
-
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
