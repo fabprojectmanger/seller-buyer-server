@@ -56,6 +56,16 @@ const ProductSchema = new mongoose.Schema({
     },
     phone: {
         type: String
+    },
+
+    id: {
+        type: String
+    },
+    state: {
+        type:String
+    },
+    city: {
+        type:String
     }
 
 })
