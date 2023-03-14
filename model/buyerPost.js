@@ -38,6 +38,15 @@ const buyerPostSchema = new mongoose.Schema({
     },
     email: {
         type: String
+    },
+    id: {
+        type: String
+    },
+    state: {
+        type: String
+    },
+    city: {
+        type: String
     }
 })
 

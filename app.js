@@ -111,7 +111,7 @@ app.post("/user-contacts", (req, res) => {
 })
 
 app.post("/addProduct", upload.single('image'), (req, res) => {
-    const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName } = req.body
+    const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = req.body
     const image = req.file?.path
 
     const addProduct = new Product({
@@ -128,7 +128,10 @@ app.post("/addProduct", upload.single('image'), (req, res) => {
         videoLink: videoLink,
         pricePerUnit: pricePerUnit,
         nameOfOrganization: nameOfOrganization,
-        fullName: fullName
+        fullName: fullName,
+        id: id,
+        state: state,
+        city: city
     })
     addProduct.save()
     res.send({ added: true })
@@ -136,7 +139,7 @@ app.post("/addProduct", upload.single('image'), (req, res) => {
 
 app.post("/buyerPost", (req, res) => {
 
-    const { title, category, subCategory, location, description, tags, quantity, budget, unit, email } = req.body
+    const { title, category, subCategory, location, description, tags, quantity, budget, unit, email, id, state, city } = req.body
 
     const addPost = new BuyerPost({
         title: title,
@@ -148,19 +151,24 @@ app.post("/buyerPost", (req, res) => {
         tags: tags,
         quantity: quantity,
         budget: budget,
-        email: email
+        email: email,
+        id: id,
+        state: state,
+        city: city
     })
     addPost.save()
     res.send({ added: true })
 })
 
 
-app.post("/seller-register", async (req, res) => {
 
+app.post("/seller-register", async (req, res) => {
 
     const { nameOfOrganization, email, gst, pan, password, phone, address, fullName, } = req.body
     const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
     const existingUser = await UserRegister.findOne({ email: req.body.email });
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/
 
     if (fullName === '' || email === '' || password === '' || phone === '' || nameOfOrganization === '' || gst === "" || pan === "" || address === "") {
         res.send({ message: "Fields must not be empty!" })
@@ -175,6 +183,18 @@ app.post("/seller-register", async (req, res) => {
 
     else if (!passwordRegex.test(password)) {
         res.send({ message: " Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
+    }
+    else if (gst.length < 15) {
+        res.send({ message: "GST  number must contain 15 characters" })
+    }
+    else if (!gstRegex.test(gst)) {
+        res.send({ message: "GST  number invalid" })
+    }
+    else if (pan.length < 10) {
+        res.send({ message: "PAN number must contain 10 characters" })
+    }
+    else if (!panRegex.test(pan)) {
+        res.send({ message: "PAN number invalid" })
     }
     else if (phone.length < 10) {
         res.send({ message: "Phone number must contain 10 characters" })
@@ -345,19 +365,17 @@ axios.get('https://ipinfo.io?token=' + ipinfoToken)
             })
 
             location.save()
-
             console.log("Location Saved")
         }
     })
 
-app.delete('/buyerpost/:id', async (req, res) => {
-    const id = req.params.id
-    await BuyerPost.findOneAndDelete(id).exec()
-    res.send("Deleted")
-});
-
-app.delete('/products/:id', async (req, res) => {
-    const id = req.params.id
-    await Product.findOneAndDelete(id).exec()
-    res.send("Deleted")
-});
+// app.delete('/buyerpost/:id', async (req, res) => {
+//     const id = req.params.id
+//     await BuyerPost.findOneAndDelete(id).exec()
+//     res.send("Deleted")
+// });
+// app.delete('/products/:id', async (req, res) => {
+//     const id = req.params.id
+//     await Product.findOneAndDelete(id).exec()
+//     res.send("Deleted")
+// });]
