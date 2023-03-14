@@ -9,20 +9,20 @@ const upload = multer({ dest: 'uploads/' });
 const cors = require("cors");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-const http = require("http");
-const { Server } = require("socket.io");
-
-const server = http.createServer(app);
+const socket = require("socket.io");
 
 const mongoose = require('mongoose');
 const mongodb = require('mongodb')
 const Product = require('./model/products');
+const Contacts = require("./model/contacts");
+
 const UserRegister = require('./model/register')
 const { isEmail } = require('validator');
 const BuyerPost = require('./model/buyerPost')
 const Location = require('./model/Location');
 app.use(cors());
 app.use('/uploads', express.static('uploads'))
+const messageRoutes = require("./routes/messages");
 
 function getUsernameFromEmail(email) {
     const emailArray = email.split("@");
@@ -30,20 +30,35 @@ function getUsernameFromEmail(email) {
     return username;
 }
 mongoose.set('strictQuery', false)
-mongoose.connect(process.env.MONGODB_DATABASE, { useNewUrlParser: true, useUnifiedTopology: true, });
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function () {
-    console.log('Database connected!');
+mongoose.connect(process.env.MONGODB_DATABASE, { 
+    useNewUrlParser: true, 
+    useUnifiedTopology: true, 
+}) .then(() => {
+    console.log("DB Connetion Successfull");
 })
+.catch((err) => {
+    console.log(err.message);
+});
 
-const io = new Server(server, {
+// const db = mongoose.connection;
+// db.on('error', console.error.bind(console, 'connection error:'));
+// db.once('open', function () {
+//     console.log('Database connected!');
+// })
+
+// app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
+
+const server = app.listen(port, () => {
+    console.log(`Server started on port ${port}`);
+});
+
+const io = socket(server, {
     cors: {
-        origin: "https://deploy-preview-9--seller-buyer.netlify.app",
-        methods: ["GET", "POST"]
-    }
-})
+        origin: "http://localhost:3000",
+        credentials: true,
+    },
+});
 
 io.on("connection", (socket) => {
     socket.on("join_room", (data) => {
@@ -60,9 +75,40 @@ io.on("connection", (socket) => {
     })
 })
 
-app.get('/', (req, res) => {
-    res.send('Hello, World!');
-});
+app.post("/add-contacts", async (req, res) => {
+    const { sellerEmail, sellerName, sellerID, buyerEmail, buyerName } = req.body;
+    const existingUser = await Contacts.findOne(
+        { 
+            sellerEmail: sellerEmail,
+            buyerEmail: buyerEmail
+        }
+    );
+    if (!existingUser) {
+        const addContact = new Contacts({
+            sellerEmail: sellerEmail,
+            sellerName: sellerName,
+            sellerID: sellerID,
+            buyerEmail: buyerEmail,
+            buyerName: buyerName,
+        })
+        addContact.save();
+        res.send({added: true});
+    }
+})
+
+app.post("/user-contacts", (req, res) => {
+    const { email } = req.body;
+
+    Contacts.findOne({ email: email }, (err, result) => {
+        if (result) {
+            const contacts = JSON.stringify(result);
+            res.send({status: true, contacts: contacts})
+        }
+        else {
+            res.send({status: false})
+        }
+    })
+})
 
 app.post("/addProduct", upload.single('image'), (req, res) => {
     const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName } = req.body
@@ -86,7 +132,6 @@ app.post("/addProduct", upload.single('image'), (req, res) => {
     })
     addProduct.save()
     res.send({ added: true })
-
 })
 
 app.post("/buyerPost", (req, res) => {
@@ -223,8 +268,6 @@ app.post("/login", async (req, res) => {
     })
 })
 
-
-
 app.get('/category', (req, res) => {
     Product.distinct('category')
         .then(category => {
@@ -285,13 +328,9 @@ app.get('/buyerPosts', (req, res) => {
         });
 })
 
-
-
 const ipinfoToken = 'bf73537cbb17e7'
 
-
 axios.get('https://ipinfo.io?token=' + ipinfoToken)
-
     .then(async (response) => {
         const existingLocation = await Location.findOne({ ip: response.data.ip });
         if (existingLocation) {
@@ -316,19 +355,9 @@ app.delete('/buyerpost/:id', async (req, res) => {
     await BuyerPost.findOneAndDelete(id).exec()
     res.send("Deleted")
 });
+
 app.delete('/products/:id', async (req, res) => {
     const id = req.params.id
     await Product.findOneAndDelete(id).exec()
     res.send("Deleted")
-});
-
-
-
-
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
-
-server.listen(3001, () => {
-    console.log("Chat Server running!");
 });
