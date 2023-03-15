@@ -23,7 +23,30 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     max: 10
+  },
+  gst: {
+    type: String,
+  },
+  pan: {
+    type: String,
+  },
+
+  address: {
+    type: String,
+  },
+  nameOfOrganization: {
+    type: String,
+  },
+  role: {
+    type: String
+  },
+  otp: {
+    type: String
+  },
+  location: {
+    type: String
   }
+
 });
 
 module.exports = mongoose.model("Users", userSchema);
