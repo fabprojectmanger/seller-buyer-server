@@ -10,9 +10,10 @@ const cors = require("cors");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const socket = require("socket.io");
+const authRoutes = require("./routes/auth");
+const messageRoutes = require("./routes/messages");
 
 const mongoose = require('mongoose');
-const mongodb = require('mongodb')
 const Product = require('./model/products');
 const Contacts = require("./model/contacts");
 
@@ -22,7 +23,6 @@ const BuyerPost = require('./model/buyerPost')
 const Location = require('./model/Location');
 app.use(cors());
 app.use('/uploads', express.static('uploads'))
-const messageRoutes = require("./routes/messages");
 
 function getUsernameFromEmail(email) {
     const emailArray = email.split("@");
@@ -46,7 +46,7 @@ mongoose.connect(process.env.MONGODB_DATABASE, {
 //     console.log('Database connected!');
 // })
 
-// app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 const server = app.listen(port, () => {
@@ -55,25 +55,26 @@ const server = app.listen(port, () => {
 
 const io = socket(server, {
     cors: {
-        origin: "http://localhost:3000",
-        credentials: true,
+      origin: "http://localhost:8000",
+      credentials: true,
     },
-});
-
-io.on("connection", (socket) => {
-    socket.on("join_room", (data) => {
-        socket.join(data);
-        console.log(`User with ID: ${socket.id} has logged in!`)
-    })
-
-    socket.on("send_message", (data) => {
-        socket.to(data.room).emit("receive_message", data);
-    })
-
-    socket.on("disconnect", () => {
-        console.log("User Disconnected", socket.id)
-    })
-})
+  });
+  
+  global.onlineUsers = new Map();
+  io.on("connection", (socket) => {
+    global.chatSocket = socket;
+    socket.on("add-user", (userId) => {
+      onlineUsers.set(userId, socket.id);
+    });
+  
+    socket.on("send-msg", (data) => {
+      const sendUserSocket = onlineUsers.get(data.to);
+      if (sendUserSocket) {
+        socket.to(sendUserSocket).emit("msg-recieve", data.msg);
+      }
+    });
+  });
+  
 
 app.post("/add-contacts", async (req, res) => {
     const { sellerEmail, sellerName, sellerID, buyerEmail, buyerName } = req.body;
