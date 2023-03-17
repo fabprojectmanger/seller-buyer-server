@@ -3,8 +3,8 @@ const bcrypt = require("bcrypt");
 
 module.exports.login = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username });
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
     if (!user)
       return res.json({ msg: "Incorrect Username or Password", status: false });
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -19,8 +19,8 @@ module.exports.login = async (req, res, next) => {
 
 module.exports.register = async (req, res, next) => {
   try {
-    const { username, email, password, mobileNumber } = req.body;
-    const usernameCheck = await User.findOne({ username });
+    const { username, email, password, mobileNumber, role } = req.body;
+    const usernameCheck = await User.findOne({ email });
     // if (usernameCheck)
     //   return res.json({ msg: "Username already used", status: false });
     const emailCheck = await User.findOne({ email });
@@ -32,7 +32,7 @@ module.exports.register = async (req, res, next) => {
       username,
       password: hashedPassword,
       mobileNumber,
-      role: "Buyer"
+      role
     });
     delete user.password;
     return res.json({ status: true, user });
@@ -40,9 +40,9 @@ module.exports.register = async (req, res, next) => {
     next(ex);
   }
 };
-module.exports.register = async (req, res, next) => {
+module.exports.sellerregister = async (req, res, next) => {
   try {
-    const { username, email, password, mobileNumber, gst, pan, nameOfOrganization } = req.body;
+    const { username, email, password, mobileNumber, gst, pan, nameOfOrganization, role } = req.body;
     const usernameCheck = await User.findOne({ username });
     // if (usernameCheck)
     //   return res.json({ msg: "Username already used", status: false });
@@ -55,10 +55,10 @@ module.exports.register = async (req, res, next) => {
       username,
       password: hashedPassword,
       mobileNumber,
-      role: "Seller",
       pan,
       nameOfOrganization,
-      gst
+      gst,
+      role
     });
     delete selleruser.password;
     return res.json({ status: true, selleruser });
