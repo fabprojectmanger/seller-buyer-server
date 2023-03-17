@@ -12,6 +12,8 @@ const saltRounds = 10;
 const socket = require("socket.io");
 const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
+const nodemailer = require("nodemailer");
+
 
 const mongoose = require('mongoose');
 const Product = require('./model/products');
@@ -21,6 +23,7 @@ const UserRegister = require('./model/register')
 const { isEmail } = require('validator');
 const BuyerPost = require('./model/buyerPost')
 const Location = require('./model/Location');
+const User = require('./model/userModel')
 app.use(cors());
 app.use('/uploads', express.static('uploads'))
 
@@ -30,15 +33,15 @@ function getUsernameFromEmail(email) {
     return username;
 }
 mongoose.set('strictQuery', false)
-mongoose.connect(process.env.MONGODB_DATABASE, { 
-    useNewUrlParser: true, 
-    useUnifiedTopology: true, 
-}) .then(() => {
+mongoose.connect(process.env.MONGODB_DATABASE, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+}).then(() => {
     console.log("DB Connetion Successfull");
 })
-.catch((err) => {
-    console.log(err.message);
-});
+    .catch((err) => {
+        console.log(err.message);
+    });
 
 // const db = mongoose.connection;
 // db.on('error', console.error.bind(console, 'connection error:'));
@@ -55,31 +58,31 @@ const server = app.listen(port, () => {
 
 const io = socket(server, {
     cors: {
-      origin: "http://localhost:8000",
-      credentials: true,
+        origin: "http://localhost:8000",
+        credentials: true,
     },
-  });
-  
-  global.onlineUsers = new Map();
-  io.on("connection", (socket) => {
+});
+
+global.onlineUsers = new Map();
+io.on("connection", (socket) => {
     global.chatSocket = socket;
     socket.on("add-user", (userId) => {
-      onlineUsers.set(userId, socket.id);
+        onlineUsers.set(userId, socket.id);
     });
-  
+
     socket.on("send-msg", (data) => {
-      const sendUserSocket = onlineUsers.get(data.to);
-      if (sendUserSocket) {
-        socket.to(sendUserSocket).emit("msg-recieve", data.msg);
-      }
+        const sendUserSocket = onlineUsers.get(data.to);
+        if (sendUserSocket) {
+            socket.to(sendUserSocket).emit("msg-recieve", data.msg);
+        }
     });
-  });
-  
+});
+
 
 app.post("/add-contacts", async (req, res) => {
     const { sellerEmail, sellerName, sellerID, buyerEmail, buyerName } = req.body;
     const existingUser = await Contacts.findOne(
-        { 
+        {
             sellerEmail: sellerEmail,
             buyerEmail: buyerEmail
         }
@@ -93,7 +96,7 @@ app.post("/add-contacts", async (req, res) => {
             buyerName: buyerName,
         })
         addContact.save();
-        res.send({added: true});
+        res.send({ added: true });
     }
 })
 
@@ -103,10 +106,10 @@ app.post("/user-contacts", (req, res) => {
     Contacts.findOne({ email: email }, (err, result) => {
         if (result) {
             const contacts = JSON.stringify(result);
-            res.send({status: true, contacts: contacts})
+            res.send({ status: true, contacts: contacts })
         }
         else {
-            res.send({status: false})
+            res.send({ status: false })
         }
     })
 })
@@ -114,28 +117,33 @@ app.post("/user-contacts", (req, res) => {
 app.post("/addProduct", upload.single('image'), (req, res) => {
     const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = req.body
     const image = req.file?.path
+    if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
+        res.send({ message: "Fields must not be empty!" })
+    }
+    else {
 
-    const addProduct = new Product({
-        title: title,
-        category: category,
-        subCategory: subCategory,
-        unit: unit,
-        price: price,
-        location: location,
-        description: description,
-        tags: tags,
-        email: email,
-        image: image,
-        videoLink: videoLink,
-        pricePerUnit: pricePerUnit,
-        nameOfOrganization: nameOfOrganization,
-        fullName: fullName,
-        id: id,
-        state: state,
-        city: city
-    })
-    addProduct.save()
-    res.send({ added: true })
+        const addProduct = new Product({
+            title: title,
+            category: category,
+            subCategory: subCategory,
+            unit: unit,
+            price: price,
+            location: location,
+            description: description,
+            tags: tags,
+            email: email,
+            image: image,
+            videoLink: videoLink,
+            pricePerUnit: pricePerUnit,
+            nameOfOrganization: nameOfOrganization,
+            fullName: fullName,
+            id: id,
+            state: state,
+            city: city
+        })
+        addProduct.save()
+        res.send({ added: true })
+    }
 })
 
 app.post("/buyerPost", (req, res) => {
@@ -299,6 +307,16 @@ app.get('/category', (req, res) => {
             res.status(500).send('Error retrieving tags');
         });
 })
+app.get('/categoryProduct', (req, res) => {
+    Product.find({})
+        .then(products => {
+            res.json(products);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send('Error retrieving posts');
+        });
+});
 
 
 app.get('/allProducts', (req, res) => {
@@ -349,34 +367,117 @@ app.get('/buyerPosts', (req, res) => {
         });
 })
 
-const ipinfoToken = 'bf73537cbb17e7'
+// const ipinfoToken = 'bf73537cbb17e7'
 
-axios.get('https://ipinfo.io?token=' + ipinfoToken)
-    .then(async (response) => {
-        const existingLocation = await Location.findOne({ ip: response.data.ip });
-        if (existingLocation) {
-            console.log('Document with same IP address already exists');
+// axios.get('https://ipinfo.io?token=' + ipinfoToken)
+//     .then(async (response) => {
+//         const existingLocation = await Location.findOne({ ip: response.data.ip });
+//         if (existingLocation) {
+//             console.log('Document with same IP address already exists');
+//         }
+//         else {
+//             const location = new Location({
+//                 ip: response.data.ip,
+//                 region: response.data.region,
+//                 city: response.data.city,
+//                 country: response.data.country,
+//             })
+
+//             location.save()
+//             console.log("Location Saved")
+//         }
+//     })
+
+
+app.delete('/buyer/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedDocument = await BuyerPost.findByIdAndDelete(id);
+        if (!deletedDocument) {
+            return res.status(404).json({ message: 'Document not found' });
         }
-        else {
-            const location = new Location({
-                ip: response.data.ip,
-                region: response.data.region,
-                city: response.data.city,
-                country: response.data.country,
-            })
-
-            location.save()
-            console.log("Location Saved")
+        res.status(200).json(deletedDocument);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+app.delete('/products/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedDocument = await Product.findByIdAndDelete(id);
+        if (!deletedDocument) {
+            return res.status(404).json({ message: 'Document not found' });
         }
-    })
+        res.status(200).json(deletedDocument);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
-// app.delete('/buyerpost/:id', async (req, res) => {
-//     const id = req.params.id
-//     await BuyerPost.findOneAndDelete(id).exec()
-//     res.send("Deleted")
-// });
-// app.delete('/products/:id', async (req, res) => {
-//     const id = req.params.id
-//     await Product.findOneAndDelete(id).exec()
-//     res.send("Deleted")
-// });]
+
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    requireTLS: true,
+    auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD
+    }
+})
+
+
+app.post('/send-otp', async (req, res) => {
+    const { email } = req.body;
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await User.findOneAndUpdate({ email }, { otp }, { upsert: true });
+
+    const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: 'OTP Verification',
+        text: `Your OTP is ${otp}. Please use this code to verify your account.`
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.log(error);
+            res.status(500).send('Error sending OTP');
+        } else {
+            console.log(`OTP sent to ${email}: ${otp}`);
+            res.status(200).send('OTP sent');
+        }
+    });
+});
+
+
+app.post('/verify-otp', async (req, res) => {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email, otp });
+    if (user) {
+        await User.deleteOne({ email });
+        res.send({ verified: true });
+    } else {
+        res.send({ verified: false });
+    }
+});
+
+
+app.get('/category/:name', (req, res) => {
+    const categoryName = req.params.name;
+    
+    // Find all products that have the specified category name
+    Product.find({ category: categoryName })
+      .then(products => {
+        res.json(products);
+      })
+      .catch(error => {
+        console.error(error);
+        res.status(500).send('Error retrieving products');
+      });
+  });
+
+
+
