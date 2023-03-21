@@ -10,7 +10,7 @@ const router = require("express").Router();
 
 router.post("/login", login);
 router.post("/register", register);
-router.post("/sellerregister",sellerregister)
+router.post("/sellerregister", sellerregister)
 router.get("/allusers/:id", getAllUsers);
 
 // router.post("/setavatar/:id", setAvatar);
