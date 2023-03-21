@@ -22,6 +22,7 @@ const Contacts = require("./model/contacts");
 const UserRegister = require('./model/register')
 const { isEmail } = require('validator');
 const BuyerPost = require('./model/buyerPost')
+const Location = require('./model/Location');
 const User = require('./model/userModel')
 app.use(cors());
 app.use('/uploads', express.static('uploads'))
@@ -76,6 +77,9 @@ io.on("connection", (socket) => {
         }
     });
 });
+
+
+
 
 
 app.post("/add-contacts", async (req, res) => {
