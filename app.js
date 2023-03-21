@@ -22,7 +22,6 @@ const Contacts = require("./model/contacts");
 const UserRegister = require('./model/register')
 const { isEmail } = require('validator');
 const BuyerPost = require('./model/buyerPost')
-const Location = require('./model/Location');
 const User = require('./model/userModel')
 app.use(cors());
 app.use('/uploads', express.static('uploads'))
@@ -467,17 +466,17 @@ app.post('/verify-otp', async (req, res) => {
 
 app.get('/category/:name', (req, res) => {
     const categoryName = req.params.name;
-    
+
     // Find all products that have the specified category name
     Product.find({ category: categoryName })
-      .then(products => {
-        res.json(products);
-      })
-      .catch(error => {
-        console.error(error);
-        res.status(500).send('Error retrieving products');
-      });
-  });
+        .then(products => {
+            res.json(products);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send('Error retrieving products');
+        });
+});
 
 
 
