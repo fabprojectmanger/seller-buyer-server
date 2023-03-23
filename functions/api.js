@@ -13,6 +13,8 @@ const socket = require("socket.io");
 const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
 const nodemailer = require("nodemailer");
+const router = express.Router();
+const serverless = require('serverless-http');
 
 
 const mongoose = require('mongoose');
@@ -82,7 +84,7 @@ io.on("connection", (socket) => {
 
 
 
-app.post("/add-contacts", async (req, res) => {
+router.post("/add-contacts", async (req, res) => {
     const { sellerEmail, sellerName, sellerID, buyerEmail, buyerName } = req.body;
     const existingUser = await Contacts.findOne(
         {
@@ -103,7 +105,7 @@ app.post("/add-contacts", async (req, res) => {
     }
 })
 
-app.post("/user-contacts", (req, res) => {
+router.post("/user-contacts", (req, res) => {
     const { email } = req.body;
 
     Contacts.findOne({ email: email }, (err, result) => {
@@ -117,7 +119,7 @@ app.post("/user-contacts", (req, res) => {
     })
 })
 
-app.post("/addProduct", upload.single('image'), (req, res) => {
+router.post("/addProduct", upload.single('image'), (req, res) => {
     const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = req.body
     const image = req.file?.path
     if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
@@ -149,7 +151,7 @@ app.post("/addProduct", upload.single('image'), (req, res) => {
     }
 })
 
-app.post("/buyerPost", (req, res) => {
+router.post("/buyerPost", (req, res) => {
 
     const { title, category, subCategory, location, description, tags, quantity, budget, unit, email, id, state, city } = req.body
 
@@ -174,133 +176,8 @@ app.post("/buyerPost", (req, res) => {
 
 
 
-app.post("/seller-register", async (req, res) => {
 
-    const { nameOfOrganization, email, gst, pan, password, phone, address, fullName, } = req.body
-    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
-    const existingUser = await UserRegister.findOne({ email: req.body.email });
-    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
-    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/
-
-    if (fullName === '' || email === '' || password === '' || phone === '' || nameOfOrganization === '' || gst === "" || pan === "" || address === "") {
-        res.send({ message: "Fields must not be empty!" })
-    }
-
-    else if (!isEmail(email)) {
-        res.send({ message: "Invalid Email" })
-    }
-    else if (existingUser) {
-        res.send({ message: "Email already in use" })
-    }
-
-    else if (!passwordRegex.test(password)) {
-        res.send({ message: " Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
-    }
-    else if (gst.length < 15) {
-        res.send({ message: "GST  number must contain 15 characters" })
-    }
-    else if (!gstRegex.test(gst)) {
-        res.send({ message: "GST  number invalid" })
-    }
-    else if (pan.length < 10) {
-        res.send({ message: "PAN number must contain 10 characters" })
-    }
-    else if (!panRegex.test(pan)) {
-        res.send({ message: "PAN number invalid" })
-    }
-    else if (phone.length < 10) {
-        res.send({ message: "Phone number must contain 10 characters" })
-    }
-    else {
-
-        bcrypt.hash(password, saltRounds, (err, hash) => {
-            if (err) {
-                console.log("hash error", err);
-            }
-
-            const sellerRegister = new UserRegister({
-                fullName: fullName,
-                nameOfOrganization: nameOfOrganization,
-                email: email,
-                gst: gst,
-                pan: pan,
-                password: hash,
-                phone: phone,
-                address: address,
-                role: 'Seller'
-            })
-            sellerRegister.save()
-            res.send("Register Successfully")
-        })
-    }
-})
-
-app.post('/buyer-register', async (req, res) => {
-
-    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,16}$/
-    const existingUser = await UserRegister.findOne({ email: req.body.email });
-    const { fullName, email, password, phone } = req.body
-
-    if (fullName === '' || email === '' || password === '' || phone === '') {
-        res.send({ message: "Fields must not be empty!" })
-    }
-
-    else if (!isEmail(email)) {
-        res.send({ message: "Invalid Email" })
-    }
-    else if (existingUser) {
-        res.send({ message: "Email already in use" })
-    }
-
-    else if (!passwordRegex.test(password)) {
-        res.send({ message: " Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" })
-    }
-    else if (phone.length < 10) {
-        res.send({ message: "Phone number must contain 10 characters" })
-    }
-    else {
-
-        bcrypt.hash(password, saltRounds, (err, hash) => {
-            if (err) {
-                console.log("hash error", err);
-            }
-
-            const buyerRegister = new UserRegister({
-                fullName: fullName,
-                email: email,
-                password: hash,
-                phone: phone,
-                role: 'Buyer'
-            })
-            buyerRegister.save();
-            res.send("Register Successfully")
-        })
-    }
-})
-
-app.post("/login", async (req, res) => {
-
-    const { email, password } = req.body
-
-    UserRegister.findOne({ email: email }, (err, result) => {
-        if (result) {
-            bcrypt.compare(password, result.password, async (error, response) => {
-
-                if (response) {
-                    res.send({ message: "Login Successful", result: result, loggedIn: true })
-                }
-                else {
-                    res.send({ status: "Password is incorrect!" });
-                }
-            })
-        }
-        else {
-            res.send({ status: "Invalid Email and Password" })
-        }
-    })
-})
-
-app.get('/category', (req, res) => {
+router.get('/category', (req, res) => {
     Product.distinct('category')
         .then(category => {
             res.json(category);
@@ -310,7 +187,7 @@ app.get('/category', (req, res) => {
             res.status(500).send('Error retrieving tags');
         });
 })
-app.get('/categoryProduct', (req, res) => {
+router.get('/categoryProduct', (req, res) => {
     Product.find({})
         .then(products => {
             res.json(products);
@@ -322,7 +199,7 @@ app.get('/categoryProduct', (req, res) => {
 });
 
 
-app.get('/allProducts', (req, res) => {
+router.get('/allProducts', (req, res) => {
     Product.find({})
         .then(products => {
             res.json(products);
@@ -333,7 +210,7 @@ app.get('/allProducts', (req, res) => {
         });
 });
 
-app.post("/sellerProducts", (req, res) => {
+router.post("/sellerProducts", (req, res) => {
     const { email } = req.body
     Product.find({ email: email }, (err, result) => {
         if (result) {
@@ -342,7 +219,7 @@ app.post("/sellerProducts", (req, res) => {
     })
 })
 
-app.post("/buyerRequirements", (req, res) => {
+router.post("/buyerRequirements", (req, res) => {
     const { email } = req.body
     BuyerPost.find({ email: email }, (err, result) => {
         if (result) {
@@ -351,16 +228,16 @@ app.post("/buyerRequirements", (req, res) => {
     })
 })
 
-app.post("/profile", (req, res) => {
+router.post("/profile", (req, res) => {
     const { email } = req.body
-    UserRegister.findOne({ email: email }, (err, result) => {
+    User.findOne({ email: email }, (err, result) => {
         if (result) {
             res.send({ message: "Login Successful", result: result, loggedIn: true })
         }
     })
 })
 
-app.get('/buyerPosts', (req, res) => {
+router.get('/buyerPosts', (req, res) => {
     BuyerPost.find({})
         .then(posts => {
             res.json(posts)
@@ -370,29 +247,10 @@ app.get('/buyerPosts', (req, res) => {
         });
 })
 
-// const ipinfoToken = 'bf73537cbb17e7'
-
-// axios.get('https://ipinfo.io?token=' + ipinfoToken)
-//     .then(async (response) => {
-//         const existingLocation = await Location.findOne({ ip: response.data.ip });
-//         if (existingLocation) {
-//             console.log('Document with same IP address already exists');
-//         }
-//         else {
-//             const location = new Location({
-//                 ip: response.data.ip,
-//                 region: response.data.region,
-//                 city: response.data.city,
-//                 country: response.data.country,
-//             })
-
-//             location.save()
-//             console.log("Location Saved")
-//         }
-//     })
 
 
-app.delete('/buyer/:id', async (req, res) => {
+
+router.delete('/buyer/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const deletedDocument = await BuyerPost.findByIdAndDelete(id);
@@ -404,7 +262,7 @@ app.delete('/buyer/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-app.delete('/products/:id', async (req, res) => {
+router.delete('/products/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const deletedDocument = await Product.findByIdAndDelete(id);
@@ -430,7 +288,7 @@ const transporter = nodemailer.createTransport({
 })
 
 
-app.post('/send-otp', async (req, res) => {
+router.post('/send-otp', async (req, res) => {
     const { email } = req.body;
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -455,7 +313,7 @@ app.post('/send-otp', async (req, res) => {
 });
 
 
-app.post('/verify-otp', async (req, res) => {
+router.post('/verify-otp', async (req, res) => {
     const { email, otp } = req.body;
 
     const user = await User.findOne({ email, otp });
@@ -467,20 +325,7 @@ app.post('/verify-otp', async (req, res) => {
     }
 });
 
-
-app.get('/category/:name', (req, res) => {
-    const categoryName = req.params.name;
-
-    // Find all products that have the specified category name
-    Product.find({ category: categoryName })
-        .then(products => {
-            res.json(products);
-        })
-        .catch(error => {
-            console.error(error);
-            res.status(500).send('Error retrieving products');
-        });
-});
-
+app.use('/.netlify/functions/api', router);
+module.exports.handler = serverless(app);
 
 
