@@ -7,7 +7,6 @@ const multer = require('multer');
 const axios = require('axios');
 // const upload = multer({ dest: 'uploads/' });
 const cors = require("cors");
-const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const socket = require("socket.io");
 const authRoutes = require("../routes/auth")
