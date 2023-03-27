@@ -10,22 +10,23 @@ const cors = require("cors");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const socket = require("socket.io");
-const authRoutes = require("./routes/auth");
-const messageRoutes = require("./routes/messages");
+const authRoutes = require("../routes/auth")
+const messageRoutes = require("../routes/messages");
 const nodemailer = require("nodemailer");
 const router = express.Router();
 const serverless = require('serverless-http');
 
 
 const mongoose = require('mongoose');
-const Product = require('./model/products');
-const Contacts = require("./model/contacts");
+const Product = require('../model/products');
+const Contacts = require("../model/contacts");
 
-const UserRegister = require('./model/register')
+
+const UserRegister = require('../model/register')
 const { isEmail } = require('validator');
-const BuyerPost = require('./model/buyerPost')
-const Location = require('./model/Location');
-const User = require('./model/userModel')
+const BuyerPost = require('../model/buyerPost')
+const Location = require('../model/Location');
+const User = require('../model/userModel')
 app.use(cors());
 app.use('/uploads', express.static('uploads'))
 
