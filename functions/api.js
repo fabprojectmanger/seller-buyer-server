@@ -15,7 +15,7 @@ const messageRoutes = require("../routes/messages");
 const nodemailer = require("nodemailer");
 const router = express.Router();
 const serverless = require('serverless-http');
-
+const formidable = require('formidable-serverless');
 
 const mongoose = require('mongoose');
 const Product = require('../model/products');
@@ -82,6 +82,26 @@ io.on("connection", (socket) => {
 });
 
 
+router.get('/', (req, res) => {
+    res.json([
+        {
+            id: '001',
+            name: 'Smith',
+            email: 'smith@gmail.com',
+        },
+        {
+            id: '002',
+            name: 'Sam',
+            email: 'sam@gmail.com',
+        },
+        {
+            id: '003',
+            name: 'lily',
+            email: 'lily@gmail.com',
+        },
+    ]);
+});
+
 
 
 
@@ -120,37 +140,53 @@ router.post("/user-contacts", (req, res) => {
     })
 })
 
-router.post("/addProduct", upload.single('image'), (req, res) => {
-    const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = req.body
-    const image = req.file?.path
-    if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
-        res.send({ message: "Fields must not be empty!" })
-    }
-    else {
-
+router.post('/addProduct', (req, res) => {
+    const form = new formidable.IncomingForm();
+    form.uploadDir = '/tmp'; // Set temporary upload directory
+    form.keepExtensions = true; // Keep file extensions
+  
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        return res.status(500).send({ message: 'File upload failed!' });
+      }
+  
+      const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = fields;
+      const { path: imagePath } = files.image;
+  
+      if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
+        return res.status(400).send({ message: "Fields must not be empty!" });
+      }
+  
+      try {
+        // Save the product data to the database
         const addProduct = new Product({
-            title: title,
-            category: category,
-            subCategory: subCategory,
-            unit: unit,
-            price: price,
-            location: location,
-            description: description,
-            tags: tags,
-            email: email,
-            image: image,
-            videoLink: videoLink,
-            pricePerUnit: pricePerUnit,
-            nameOfOrganization: nameOfOrganization,
-            fullName: fullName,
-            id: id,
-            state: state,
-            city: city
-        })
-        addProduct.save()
-        res.send({ added: true })
-    }
-})
+          title: title,
+          category: category,
+          subCategory: subCategory,
+          unit: unit,
+          price: price,
+          location: location,
+          description: description,
+          tags: tags,
+          email: email,
+          image: imagePath,
+          videoLink: videoLink,
+          pricePerUnit: pricePerUnit,
+          nameOfOrganization: nameOfOrganization,
+          fullName: fullName,
+          id: id,
+          state: state,
+          city: city
+        });
+  
+        await addProduct.save();
+        res.status(200).send({ added: true });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: 'Server error!' });
+      }
+    });
+  });
 
 router.post("/buyerPost", (req, res) => {
 
