@@ -5,7 +5,7 @@ require('dotenv').config();
 const port = process.env.port || 3000;
 const multer = require('multer');
 const axios = require('axios');
-const upload = multer({ dest: 'uploads/' });
+// const upload = multer({ dest: 'uploads/' });
 const cors = require("cors");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -15,7 +15,7 @@ const messageRoutes = require("../routes/messages");
 const nodemailer = require("nodemailer");
 const router = express.Router();
 const serverless = require('serverless-http');
-const formidable = require('formidable-serverless');
+// const formidable = require('formidable-serverless');
 
 const mongoose = require('mongoose');
 const Product = require('../model/products');
@@ -28,7 +28,7 @@ const BuyerPost = require('../model/buyerPost')
 const Location = require('../model/Location');
 const User = require('../model/userModel')
 app.use(cors());
-app.use('/uploads', express.static('uploads'))
+// app.use('/uploads', express.static('uploads'))
 
 function getUsernameFromEmail(email) {
     const emailArray = email.split("@");
@@ -140,53 +140,53 @@ router.post("/user-contacts", (req, res) => {
     })
 })
 
-router.post('/addProduct', (req, res) => {
-    const form = new formidable.IncomingForm();
-    form.uploadDir = '/tmp'; // Set temporary upload directory
-    form.keepExtensions = true; // Keep file extensions
+// router.post('/addProduct', (req, res) => {
+//     const form = new formidable.IncomingForm();
+//     form.uploadDir = '/tmp'; // Set temporary upload directory
+//     form.keepExtensions = true; // Keep file extensions
   
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        return res.status(500).send({ message: 'File upload failed!' });
-      }
+//     form.parse(req, async (err, fields, files) => {
+//       if (err) {
+//         return res.status(500).send({ message: 'File upload failed!' });
+//       }
   
-      const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = fields;
-      const { path: imagePath } = files.image;
+//       const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = fields;
+//       const { path: imagePath } = files.image;
   
-      if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
-        return res.status(400).send({ message: "Fields must not be empty!" });
-      }
+//       if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
+//         return res.status(400).send({ message: "Fields must not be empty!" });
+//       }
   
-      try {
-        // Save the product data to the database
-        const addProduct = new Product({
-          title: title,
-          category: category,
-          subCategory: subCategory,
-          unit: unit,
-          price: price,
-          location: location,
-          description: description,
-          tags: tags,
-          email: email,
-          image: imagePath,
-          videoLink: videoLink,
-          pricePerUnit: pricePerUnit,
-          nameOfOrganization: nameOfOrganization,
-          fullName: fullName,
-          id: id,
-          state: state,
-          city: city
-        });
+//       try {
+//         // Save the product data to the database
+//         const addProduct = new Product({
+//           title: title,
+//           category: category,
+//           subCategory: subCategory,
+//           unit: unit,
+//           price: price,
+//           location: location,
+//           description: description,
+//           tags: tags,
+//           email: email,
+//           image: imagePath,
+//           videoLink: videoLink,
+//           pricePerUnit: pricePerUnit,
+//           nameOfOrganization: nameOfOrganization,
+//           fullName: fullName,
+//           id: id,
+//           state: state,
+//           city: city
+//         });
   
-        await addProduct.save();
-        res.status(200).send({ added: true });
-      } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: 'Server error!' });
-      }
-    });
-  });
+//         await addProduct.save();
+//         res.status(200).send({ added: true });
+//       } catch (error) {
+//         console.error(error);
+//         res.status(500).send({ message: 'Server error!' });
+//       }
+//     });
+//   });
 
 router.post("/buyerPost", (req, res) => {
 
