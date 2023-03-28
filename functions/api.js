@@ -91,6 +91,14 @@ router.get('/', (req, res) => {
 });
 
 
+router.get('/health', (req, res) => {
+    if (mongoose.connection.readyState === 1) {
+        res.send('Database connection successful!');
+    } else {
+        res.status(500).send('Database connection failed.');
+    }
+});
+
 
 
 // router.post("/add-contacts", async (req, res) => {
