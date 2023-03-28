@@ -33,10 +33,23 @@ mongoose.connect(process.env.MONGODB_DATABASE, {
     });
 
 
+    const {
+        login,
+        register,
+        getAllUsers,
+        logOut,
+        sellerregister,
+      } = require("./controllers/userController");
 
-app.use("/auth", authRoutes);
-app.use("/messages", messageRoutes);
+// app.use("/auth", authRoutes);
+// app.use("/messages", messageRoutes);
+router.post("/login", login);
+router.post("/register", register);
+router.post("/sellerregister", sellerregister)
+router.get("/allusers/:id", getAllUsers);
 
+// router.post("/setavatar/:id", setAvatar);
+router.get("/logout/:id", logOut);
 
 
 const server = app.listen(port, () => {
@@ -186,9 +199,6 @@ router.get('/category', (req, res) => {
         });
 })
 
-
-
-
 router.get('/categoryProduct', (req, res) => {
     Product.find({})
         .then(products => {
@@ -249,9 +259,6 @@ router.get('/buyerPosts', (req, res) => {
         });
 })
 
-
-
-
 router.delete('/buyer/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -276,7 +283,6 @@ router.delete('/products/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
