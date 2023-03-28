@@ -35,8 +35,14 @@ mongoose.connect(process.env.MONGODB_DATABASE, {
 
 
 
-app.use("/api/auth", authRoutes);
-app.use("/api/messages", messageRoutes);
+app.use("/auth", authRoutes);
+app.use("/messages", messageRoutes);
+
+
+
+
+
+
 
 const server = app.listen(port, () => {
     console.log(`Server started on port ${port}`);
