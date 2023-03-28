@@ -6,8 +6,8 @@ const port = process.env.port || 3000;
 
 const cors = require("cors");
 const socket = require("socket.io");
-const authRoutes = require("../routes/auth")
-const messageRoutes = require("../routes/messages");
+const authRoutes = require("./routes/auth")
+const messageRoutes = require("./routes/messages");
 const nodemailer = require("nodemailer");
 const router = express.Router();
 const serverless = require('serverless-http');
@@ -15,7 +15,6 @@ const serverless = require('serverless-http');
 const mongoose = require('mongoose');
 const Product = require('../model/products');
 const Contacts = require("../model/contacts");
-
 
 const BuyerPost = require('../model/buyerPost')
 const User = require('../model/userModel')
@@ -37,10 +36,6 @@ mongoose.connect(process.env.MONGODB_DATABASE, {
 
 app.use("/auth", authRoutes);
 app.use("/messages", messageRoutes);
-
-
-
-
 
 
 
