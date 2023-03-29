@@ -33,20 +33,20 @@ mongoose.connect(process.env.MONGODB_DATABASE, {
     });
 
 
-    const {
-        login,
-        register,
-        getAllUsers,
-        logOut,
-        sellerregister,
-      } = require("./controllers/userController");
+const { login, register, getAllUsers, logOut, sellerregister, } = require("./controllers/userController");
+const { getMessages, addMessage } = require("./controllers/messageController")
 
-// app.use("/auth", authRoutes);
-// app.use("/messages", messageRoutes);
+app.use(authRoutes);
+app.use(messageRoutes);
 router.post("/login", login);
 router.post("/register", register);
 router.post("/sellerregister", sellerregister)
 router.get("/allusers/:id", getAllUsers);
+
+
+router.post("/addmsg/", addMessage);
+router.post("/getmsg/", getMessages);
+
 
 // router.post("/setavatar/:id", setAvatar);
 router.get("/logout/:id", logOut);
@@ -118,49 +118,49 @@ router.post('/addProduct', (req, res) => {
     const form = new formidable.IncomingForm();
     form.uploadDir = '/tmp'; // Set temporary upload directory
     form.keepExtensions = true; // Keep file extensions
-  
+
     form.parse(req, async (err, fields, files) => {
-      if (err) {
-        return res.status(500).send({ message: 'File upload failed!' });
-      }
-  
-      const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = fields;
-      const { path: imagePath } = files.image;
-  
-      if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
-        return res.status(400).send({ message: "Fields must not be empty!" });
-      }
-  
-      try {
-        // Save the product data to the database
-        const addProduct = new Product({
-          title: title,
-          category: category,
-          subCategory: subCategory,
-          unit: unit,
-          price: price,
-          location: location,
-          description: description,
-          tags: tags,
-          email: email,
-          image: imagePath,
-          videoLink: videoLink,
-          pricePerUnit: pricePerUnit,
-          nameOfOrganization: nameOfOrganization,
-          fullName: fullName,
-          id: id,
-          state: state,
-          city: city
-        });
-  
-        await addProduct.save();
-        res.status(200).send({ added: true });
-      } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: 'Server error!' });
-      }
+        if (err) {
+            return res.status(500).send({ message: 'File upload failed!' });
+        }
+
+        const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = fields;
+        const { path: imagePath } = files.image;
+
+        if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
+            return res.status(400).send({ message: "Fields must not be empty!" });
+        }
+
+        try {
+            // Save the product data to the database
+            const addProduct = new Product({
+                title: title,
+                category: category,
+                subCategory: subCategory,
+                unit: unit,
+                price: price,
+                location: location,
+                description: description,
+                tags: tags,
+                email: email,
+                image: imagePath,
+                videoLink: videoLink,
+                pricePerUnit: pricePerUnit,
+                nameOfOrganization: nameOfOrganization,
+                fullName: fullName,
+                id: id,
+                state: state,
+                city: city
+            });
+
+            await addProduct.save();
+            res.status(200).send({ added: true });
+        } catch (error) {
+            console.error(error);
+            res.status(500).send({ message: 'Server error!' });
+        }
     });
-  });
+});
 
 router.post("/buyerPost", (req, res) => {
 
