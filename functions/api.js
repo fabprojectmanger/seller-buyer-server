@@ -167,7 +167,7 @@ router.post("/sellerRegister", async (req, res, next) => {
     }
 });
 
-router.get("/getAllUser", async (req, res, next) => {
+router.get("/getAllUser/:id", async (req, res, next) => {
     try {
         const users = await User.find({ _id: { $ne: req.params.id } }).select([
             "email",
@@ -410,7 +410,6 @@ const transporter = nodemailer.createTransport({
         pass: process.env.PASSWORD
     }
 })
-
 
 router.post('/send-otp', async (req, res) => {
     const { email } = req.body;
