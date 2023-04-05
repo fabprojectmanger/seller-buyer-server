@@ -21,7 +21,12 @@ const User = require('../model/userModel')
 const Messages = require('../model/messageModel')
 app.use(cors());
 
-
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', 'https://seller-buyer.netlify.app');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next();
+  });
 mongoose.set('strictQuery', false)
 mongoose.connect(process.env.MONGODB_DATABASE, {
     useNewUrlParser: true,
@@ -59,8 +64,7 @@ const server = app.listen(port, () => {
 
 const io = socket(server, {
     cors: {
-        origin: "*",
-        credentials: true,
+        origin: "*"
     },
 });
 
