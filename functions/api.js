@@ -106,7 +106,7 @@ router.post("/loginuser", async (req, res, next) => {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
         if (!user)
-            return res.json({ msg: "Username not found", status: false });
+            return res.json({ msg: "User found", status: false });
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid)
             return res.json({ msg: "Incorrect Username or Password", status: false });
@@ -120,9 +120,6 @@ router.post("/loginuser", async (req, res, next) => {
 router.post("/buyerRegister", async (req, res, next) => {
     try {
         const { username, email, password, mobileNumber, role } = req.body;
-        const usernameCheck = await User.findOne({ email });
-        // if (usernameCheck)
-        //   return res.json({ msg: "Username already used", status: false });
         const emailCheck = await User.findOne({ email });
         if (emailCheck)
             return res.json({ msg: "Email already used", status: false });
@@ -144,9 +141,6 @@ router.post("/buyerRegister", async (req, res, next) => {
 router.post("/sellerRegister", async (req, res, next) => {
     try {
         const { username, email, password, mobileNumber, gst, pan, nameOfOrganization, role } = req.body;
-        const usernameCheck = await User.findOne({ username });
-        // if (usernameCheck)
-        //   return res.json({ msg: "Username already used", status: false });
         const emailCheck = await User.findOne({ email });
         if (emailCheck)
             return res.json({ msg: "Email already used", status: false });
