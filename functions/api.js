@@ -18,6 +18,7 @@ const Contacts = require("../model/contacts");
 
 const BuyerPost = require('../model/buyerPost')
 const User = require('../model/userModel')
+const Message = require('../model/messageModel')
 app.use(cors());
 
 
@@ -102,45 +103,123 @@ router.post("/add-contacts", async (req, res) => {
 
 
 
-router.post("/login"), async (req, res, next) => {
+router.post("/login", async (req, res, next) => {
     try {
-      const { email, password } = req.body;
-      const user = await User.findOne({ email });
-      if (!user)
-        return res.json({ msg: "Username not found", status: false });
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid)
-        return res.json({ msg: "Incorrect Username or Password", status: false });
-      delete user.password;
-      return res.json({ status: true, user });
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        if (!user)
+            return res.json({ msg: "Username not found", status: false });
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid)
+            return res.json({ msg: "Incorrect Username or Password", status: false });
+        delete user.password;
+        return res.json({ status: true, user });
     } catch (ex) {
-      next(ex);
+        next(ex);
     }
-  };
+});
 
-router.post("/register"), async (req, res, next) => {
+router.post("/register", async (req, res, next) => {
     try {
-      const { username, email, password, mobileNumber, role } = req.body;
-      const usernameCheck = await User.findOne({ email });
-      // if (usernameCheck)
-      //   return res.json({ msg: "Username already used", status: false });
-      const emailCheck = await User.findOne({ email });
-      if (emailCheck)
-        return res.json({ msg: "Email already used", status: false });
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await User.create({
-        email,
-        username,
-        password: hashedPassword,
-        mobileNumber,
-        role
-      });
-      delete user.password;
-      return res.json({ status: true, user });
+        const { username, email, password, mobileNumber, role } = req.body;
+        const usernameCheck = await User.findOne({ email });
+        // if (usernameCheck)
+        //   return res.json({ msg: "Username already used", status: false });
+        const emailCheck = await User.findOne({ email });
+        if (emailCheck)
+            return res.json({ msg: "Email already used", status: false });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.create({
+            email,
+            username,
+            password: hashedPassword,
+            mobileNumber,
+            role
+        });
+        delete user.password;
+        return res.json({ status: true, user });
     } catch (ex) {
-      next(ex);
+        next(ex);
     }
-  };
+});
+
+router.post("/sellerregister", async (req, res, next) => {
+    try {
+        const { username, email, password, mobileNumber, gst, pan, nameOfOrganization, role } = req.body;
+        const usernameCheck = await User.findOne({ username });
+        // if (usernameCheck)
+        //   return res.json({ msg: "Username already used", status: false });
+        const emailCheck = await User.findOne({ email });
+        if (emailCheck)
+            return res.json({ msg: "Email already used", status: false });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const selleruser = await User.create({
+            email,
+            username,
+            password: hashedPassword,
+            mobileNumber,
+            pan,
+            nameOfOrganization,
+            gst,
+            role
+        });
+        delete selleruser.password;
+        return res.json({ status: true, selleruser });
+    } catch (ex) {
+        next(ex);
+    }
+});
+
+router.get("/getAllUsers", async (req, res, next) => {
+    try {
+        const users = await User.find({ _id: { $ne: req.params.id } }).select([
+            "email",
+            "username",
+            "avatarImage",
+            "_id",
+        ]);
+        return res.json(users);
+    } catch (ex) {
+        next(ex);
+    }
+});
+
+router.post("/getMessages", async (req, res, next) => {
+    try {
+        const { from, to } = req.body;
+
+        const messages = await Messages.find({
+            users: {
+                $all: [from, to],
+            },
+        }).sort({ updatedAt: 1 });
+
+        const projectedMessages = messages.map((msg) => {
+            return {
+                fromSelf: msg.sender.toString() === from,
+                message: msg.message.text,
+            };
+        });
+        res.json(projectedMessages);
+    } catch (ex) {
+        next(ex);
+    }
+});
+router.post("/addMessage", async (req, res, next) => {
+    try {
+        const { from, to, message } = req.body;
+        const data = await Messages.create({
+            message: { text: message },
+            users: [from, to],
+            sender: from,
+        });
+
+        if (data) return res.json({ msg: "Message added successfully." });
+        else return res.json({ msg: "Failed to add message to the database" });
+    } catch (ex) {
+        next(ex);
+    }
+});
 
 router.post("/user-contacts", (req, res) => {
     const { email } = req.body;
