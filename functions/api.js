@@ -11,14 +11,14 @@ const messageRoutes = require("./routes/messages");
 const nodemailer = require("nodemailer");
 const router = express.Router();
 const serverless = require('serverless-http');
-
+const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const Product = require('../model/products');
 const Contacts = require("../model/contacts");
-
 const BuyerPost = require('../model/buyerPost')
 const User = require('../model/userModel')
-const Message = require('../model/messageModel')
+
+const Messages = require('../model/messageModel')
 app.use(cors());
 
 
@@ -100,8 +100,6 @@ router.post("/add-contacts", async (req, res) => {
         res.send({ added: true });
     }
 })
-
-
 
 router.post("/loginuser", async (req, res, next) => {
     try {
@@ -307,8 +305,6 @@ router.post("/buyerPost", (req, res) => {
 })
 
 
-
-
 router.get('/category', (req, res) => {
     Product.distinct('category')
         .then(category => {
@@ -440,7 +436,6 @@ router.post('/send-otp', async (req, res) => {
         }
     });
 });
-
 
 router.post('/verify-otp', async (req, res) => {
     const { email, otp } = req.body;
