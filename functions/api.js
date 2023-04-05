@@ -103,7 +103,7 @@ router.post("/add-contacts", async (req, res) => {
 
 
 
-router.post("/login", async (req, res, next) => {
+router.post("/loginuser", async (req, res, next) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
@@ -119,7 +119,7 @@ router.post("/login", async (req, res, next) => {
     }
 });
 
-router.post("/register", async (req, res, next) => {
+router.post("/buyerRegister", async (req, res, next) => {
     try {
         const { username, email, password, mobileNumber, role } = req.body;
         const usernameCheck = await User.findOne({ email });
@@ -143,7 +143,7 @@ router.post("/register", async (req, res, next) => {
     }
 });
 
-router.post("/sellerregister", async (req, res, next) => {
+router.post("/sellerRegister", async (req, res, next) => {
     try {
         const { username, email, password, mobileNumber, gst, pan, nameOfOrganization, role } = req.body;
         const usernameCheck = await User.findOne({ username });
