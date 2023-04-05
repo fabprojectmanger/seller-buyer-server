@@ -19,6 +19,7 @@ const BuyerPost = require('../model/buyerPost')
 const User = require('../model/userModel')
 
 const Messages = require('../model/messageModel')
+
 app.use(cors());
 
 app.use((req, res, next) => {
@@ -166,7 +167,7 @@ router.post("/sellerRegister", async (req, res, next) => {
     }
 });
 
-router.get("/getAllUsers", async (req, res, next) => {
+router.get("/getAllUser", async (req, res, next) => {
     try {
         const users = await User.find({ _id: { $ne: req.params.id } }).select([
             "email",
@@ -180,7 +181,7 @@ router.get("/getAllUsers", async (req, res, next) => {
     }
 });
 
-router.post("/getMessages", async (req, res, next) => {
+router.post("/getMessage", async (req, res, next) => {
     try {
         const { from, to } = req.body;
 
@@ -201,7 +202,7 @@ router.post("/getMessages", async (req, res, next) => {
         next(ex);
     }
 });
-router.post("/addMessage", async (req, res, next) => {
+router.post("/addMessages", async (req, res, next) => {
     try {
         const { from, to, message } = req.body;
         const data = await Messages.create({
