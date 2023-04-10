@@ -6,8 +6,6 @@ const port = process.env.port || 3000;
 
 const cors = require("cors");
 const socket = require("socket.io");
-const authRoutes = require("./routes/auth")
-const messageRoutes = require("./routes/messages");
 const nodemailer = require("nodemailer");
 const router = express.Router();
 const serverless = require('serverless-http');
@@ -17,7 +15,6 @@ const Product = require('../model/products');
 const Contacts = require("../model/contacts");
 const BuyerPost = require('../model/buyerPost')
 const User = require('../model/userModel')
-
 const Messages = require('../model/messageModel')
 
 app.use(cors());
@@ -40,25 +37,6 @@ mongoose.connect(process.env.MONGODB_DATABASE, {
     });
 
 
-const { login, register, getAllUsers, logOut, sellerregister, } = require("./controllers/userController");
-const { getMessages, addMessage } = require("./controllers/messageController")
-
-app.use(authRoutes);
-app.use(messageRoutes);
-router.post("/login", login);
-router.post("/register", register);
-router.post("/sellerregister", sellerregister)
-router.get("/allusers/:id", getAllUsers);
-
-
-router.post("/addmsg/", addMessage);
-router.post("/getmsg/", getMessages);
-
-
-// router.post("/setavatar/:id", setAvatar);
-router.get("/logout/:id", logOut);
-
-
 const server = app.listen(port, () => {
     console.log(`Server started on port ${port}`);
 });
@@ -68,7 +46,6 @@ const io = socket(server, {
         origin: "*"
     },
 });
-
 
 global.onlineUsers = new Map();
 io.on("connection", (socket) => {
