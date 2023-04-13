@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "build": "netlify deploy --prod"
+    "build": "netlify deploy --prod",
+    "start": "node app.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "express-session": "^1.17.3",
     "formidable": "^2.1.1",
     "formidable-serverless": "^1.1.1",
+    "fs": "^0.0.1-security",
     "gatsby": "^5.7.0",
     "http": "^0.0.1-security",
     "ipinfo": "^1.5.1",
