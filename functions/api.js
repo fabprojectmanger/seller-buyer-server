@@ -16,8 +16,6 @@ const Contacts = require("../model/contacts");
 const BuyerPost = require('../model/buyerPost')
 const User = require('../model/userModel')
 const Messages = require('../model/messageModel')
-const multer = require ('multer')
-const upload = multer({ dest: 'uploads/' });
 
 app.use(cors());
 
@@ -211,38 +209,38 @@ router.post("/user-contacts", (req, res) => {
     })
 })
 
-router.post("/addProduct", upload.single('image'), (req, res) => {
-    const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = req.body
-    const image = req.file?.path
+// router.post("/addProduct", upload.single('image'), (req, res) => {
+//     const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = req.body
+//     const image = req.file?.path
     
-    if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
-        res.send({ message: "Fields must not be empty!" })
-    }
-    else {
+//     if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
+//         res.send({ message: "Fields must not be empty!" })
+//     }
+//     else {
 
-        const addProduct = new Product({
-            title: title,
-            category: category,
-            subCategory: subCategory,
-            unit: unit,
-            price: price,
-            location: location,
-            description: description,
-            tags: tags,
-            email: email,
-            image: image,
-            videoLink: videoLink,
-            pricePerUnit: pricePerUnit,
-            nameOfOrganization: nameOfOrganization,
-            fullName: fullName,
-            id: id,
-            state: state,
-            city: city
-        })
-        addProduct.save()
-        res.send({ added: true })
-    }
-})
+//         const addProduct = new Product({
+//             title: title,
+//             category: category,
+//             subCategory: subCategory,
+//             unit: unit,
+//             price: price,
+//             location: location,
+//             description: description,
+//             tags: tags,
+//             email: email,
+//             image: image,
+//             videoLink: videoLink,
+//             pricePerUnit: pricePerUnit,
+//             nameOfOrganization: nameOfOrganization,
+//             fullName: fullName,
+//             id: id,
+//             state: state,
+//             city: city
+//         })
+//         addProduct.save()
+//         res.send({ added: true })
+//     }
+// })
 
 router.post("/buyerPost", (req, res) => {
 

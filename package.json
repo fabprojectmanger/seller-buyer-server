@@ -4,8 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "build": "netlify deploy --prod",
-    "start": "node app.js"
+    "build": "netlify deploy --prod"
   },
   "keywords": [],
   "author": "",
@@ -30,7 +29,6 @@
     "mongodb": "^5.0.0",
     "mongoose": "^6.9.0",
     "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
     "netlify-cli": "^13.2.0",
     "netlify-lambda": "^2.0.16",
     "node-ipinfo": "^3.4.0",
