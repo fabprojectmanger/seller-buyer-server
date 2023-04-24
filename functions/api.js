@@ -153,6 +153,7 @@ router.get("/getAllUser/:id", async (req, res, next) => {
             "username",
             "avatarImage",
             "_id",
+            "role"
         ]);
         return res.json(users);
     } catch (ex) {
@@ -243,7 +244,6 @@ router.post("/addProduct", upload.single('image'), (req, res) => {
         res.send({ added: true })
     }
 })
-
 
 
 router.post("/buyerPost", (req, res) => {
