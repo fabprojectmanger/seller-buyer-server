@@ -3,7 +3,6 @@ const app = express();
 app.use(express.json());
 require('dotenv').config();
 const port = process.env.port || 3000;
-
 const cors = require("cors");
 const socket = require("socket.io");
 const nodemailer = require("nodemailer");
@@ -16,17 +15,17 @@ const Contacts = require("../model/contacts");
 const BuyerPost = require('../model/buyerPost')
 const User = require('../model/userModel')
 const Messages = require('../model/messageModel')
-const multer = require ("multer")
+const multer = require("multer")
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors());
 
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', 'https://seller-buyer.netlify.app');
+    res.setHeader('Access-Control-Allow-Origin', "*");
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     next();
-  });
+});
 mongoose.set('strictQuery', false)
 mongoose.connect(process.env.MONGODB_DATABASE, {
     useNewUrlParser: true,
@@ -64,14 +63,12 @@ io.on("connection", (socket) => {
     });
 });
 
-router.post("/add-contacts", async (req, res) => {
+app.post("/add-contacts", async (req, res) => {
     const { sellerEmail, sellerName, sellerID, buyerEmail, buyerName } = req.body;
-    const existingUser = await Contacts.findOne(
-        {
-            sellerEmail: sellerEmail,
-            buyerEmail: buyerEmail
-        }
-    );
+    const existingUser = await Contacts.findOne({
+        sellerEmail: sellerEmail,
+        buyerEmail: buyerEmail
+    });
     if (!existingUser) {
         const addContact = new Contacts({
             sellerEmail: sellerEmail,
@@ -81,17 +78,21 @@ router.post("/add-contacts", async (req, res) => {
             buyerName: buyerName,
         })
         addContact.save();
-        res.send({ added: true });
+        res.json(addContact);
+    } else {
+        res.json(existingUser);
     }
 })
 
-router.post("/loginuser", async (req, res, next) => {
+
+
+app.post("/loginuser", async (req, res, next) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
         if (!user)
             return res.json({ msg: "User found", status: false });
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = bcrypt.compare(password, user.password);
         if (!isPasswordValid)
             return res.json({ msg: "Incorrect Username or Password", status: false });
         delete user.password;
@@ -101,7 +102,7 @@ router.post("/loginuser", async (req, res, next) => {
     }
 });
 
-router.post("/buyerRegister", async (req, res, next) => {
+app.post("/buyerRegister", async (req, res, next) => {
     try {
         const { username, email, password, mobileNumber, role } = req.body;
         const emailCheck = await User.findOne({ email });
@@ -122,7 +123,7 @@ router.post("/buyerRegister", async (req, res, next) => {
     }
 });
 
-router.post("/sellerRegister", async (req, res, next) => {
+app.post("/sellerRegister", async (req, res, next) => {
     try {
         const { username, email, password, mobileNumber, gst, pan, nameOfOrganization, role } = req.body;
         const emailCheck = await User.findOne({ email });
@@ -146,7 +147,7 @@ router.post("/sellerRegister", async (req, res, next) => {
     }
 });
 
-router.get("/getAllUser/:id", async (req, res, next) => {
+app.get("/getAllUser/:id", async (req, res, next) => {
     try {
         const users = await User.find({ _id: { $ne: req.params.id } }).select([
             "email",
@@ -161,7 +162,7 @@ router.get("/getAllUser/:id", async (req, res, next) => {
     }
 });
 
-router.post("/getMessage", async (req, res, next) => {
+app.post("/getMessage", async (req, res, next) => {
     try {
         const { from, to } = req.body;
 
@@ -182,7 +183,7 @@ router.post("/getMessage", async (req, res, next) => {
         next(ex);
     }
 });
-router.post("/addMessages", async (req, res, next) => {
+app.post("/addMessages", async (req, res, next) => {
     try {
         const { from, to, message } = req.body;
         const data = await Messages.create({
@@ -198,7 +199,7 @@ router.post("/addMessages", async (req, res, next) => {
     }
 });
 
-router.post("/user-contacts", (req, res) => {
+app.post("/user-contacts", (req, res) => {
     const { email } = req.body;
 
     Contacts.findOne({ email: email }, (err, result) => {
@@ -212,10 +213,10 @@ router.post("/user-contacts", (req, res) => {
     })
 })
 
-router.post("/addProduct", upload.single('image'), (req, res) => {
+app.post("/addProduct", upload.single('image'), (req, res) => {
     const { title, category, subCategory, unit, location, description, tags, price, email, videoLink, pricePerUnit, nameOfOrganization, fullName, id, state, city } = req.body
     const image = req.file?.buffer;
-    
+
     if (title === '' || category === '' || subCategory === '' || unit === '' || location === '' || tags === "" || description === "" || state === "" || city === "" || videoLink === "") {
         res.send({ message: "Fields must not be empty!" })
     }
@@ -246,7 +247,7 @@ router.post("/addProduct", upload.single('image'), (req, res) => {
 })
 
 
-router.post("/buyerPost", (req, res) => {
+app.post("/buyerPost", (req, res) => {
 
     const { title, category, subCategory, location, description, tags, quantity, budget, unit, email, id, state, city } = req.body
 
@@ -270,7 +271,7 @@ router.post("/buyerPost", (req, res) => {
 })
 
 
-router.get('/category', (req, res) => {
+app.get('/category', (req, res) => {
     Product.distinct('category')
         .then(category => {
             res.json(category);
@@ -281,7 +282,7 @@ router.get('/category', (req, res) => {
         });
 })
 
-router.get('/categoryProduct', (req, res) => {
+app.get('/categoryProduct', (req, res) => {
     Product.find({})
         .then(products => {
             res.json(products);
@@ -293,7 +294,7 @@ router.get('/categoryProduct', (req, res) => {
 });
 
 
-router.get('/allProducts', (req, res) => {
+app.get('/allProducts', (req, res) => {
     Product.find({})
         .then(products => {
             res.json(products);
@@ -304,7 +305,7 @@ router.get('/allProducts', (req, res) => {
         });
 });
 
-router.post("/sellerProducts", (req, res) => {
+app.post("/sellerProducts", (req, res) => {
     const { email } = req.body
     Product.find({ email: email }, (err, result) => {
         if (result) {
@@ -313,7 +314,28 @@ router.post("/sellerProducts", (req, res) => {
     })
 })
 
-router.post("/buyerRequirements", (req, res) => {
+
+app.post("/sellerContactList", async (req, res) => {
+    const { buyerEmail } = req.body;
+    const sellerList = await Contacts.find({ buyerEmail })
+    if (sellerList) {
+        res.send({ sellerList })
+    }
+})
+
+app.post("/buyerContactList", async (req, res) => {
+    const { sellerEmail } = req.body
+    const buyerList = await Contacts.find({ sellerEmail })
+    if (buyerList) {
+        res.send({ buyerList })
+    }
+})
+
+
+
+
+
+app.post("/buyerRequirements", (req, res) => {
     const { email } = req.body
     BuyerPost.find({ email: email }, (err, result) => {
         if (result) {
@@ -322,7 +344,7 @@ router.post("/buyerRequirements", (req, res) => {
     })
 })
 
-router.post("/profile", (req, res) => {
+app.post("/profile", (req, res) => {
     const { email } = req.body
     User.findOne({ email: email }, (err, result) => {
         if (result) {
@@ -331,7 +353,7 @@ router.post("/profile", (req, res) => {
     })
 })
 
-router.get('/buyerPosts', (req, res) => {
+app.get('/buyerPosts', (req, res) => {
     BuyerPost.find({})
         .then(posts => {
             res.json(posts)
@@ -341,7 +363,7 @@ router.get('/buyerPosts', (req, res) => {
         });
 })
 
-router.delete('/buyer/:id', async (req, res) => {
+app.delete('/buyer/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const deletedDocument = await BuyerPost.findByIdAndDelete(id);
@@ -353,7 +375,10 @@ router.delete('/buyer/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-router.delete('/products/:id', async (req, res) => {
+
+
+
+app.delete('/products/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const deletedDocument = await Product.findByIdAndDelete(id);
@@ -377,11 +402,10 @@ const transporter = nodemailer.createTransport({
     }
 })
 
-router.post('/send-otp', async (req, res) => {
+app.post('/send-otp', async (req, res) => {
+
     const { email } = req.body;
-
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
     await User.findOneAndUpdate({ email }, { otp }, { upsert: true });
 
     const mailOptions = {
@@ -401,7 +425,7 @@ router.post('/send-otp', async (req, res) => {
     });
 });
 
-router.post('/verify-otp', async (req, res) => {
+app.post('/verify-otp', async (req, res) => {
     const { email, otp } = req.body;
 
     const user = await User.findOne({ email, otp });

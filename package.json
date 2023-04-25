@@ -2,8 +2,9 @@
   "name": "mongodb",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "functions/api.js",
   "scripts": {
+    "dev": "nodemon api.js",
     "build": "netlify deploy --prod"
   },
   "keywords": [],
